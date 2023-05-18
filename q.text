@@ -18,8 +18,10 @@
 11.	The resultant code should ensure the web application possesses a user-friendly interface, designed to fetch and display all possible data provided by the API, thereby maximizing the amount of information available to the user.
 
 
-api_key = os.getenv('vijG9ARQVjevGky2bkTgFACUMmRJBVxVqwtzDIONOToNIw4YmTMxMgyy4PEVUhFH')
-api_secret = os.getenv('f9BHEpkASNW9S0nd7xe1Iq55ccd0bFrwI8LL0mA0UlIgODhubsX8noG6TnWicvmh')
+vijG9ARQVjevGky2bkTgFACUMmRJBVxVqwtzDIONOToNIw4YmTMxMgyy4PEVUhFH
+
+vijG9ARQVjevGky2bkTgFACUMmRJBVxVqwtzDIONOToNIw4YmTMxMgyy4PEVUhFH
+
 
 API_KEY = "vijG9ARQVjevGky2bkTgFACUMmRJBVxVqwtzDIONOToNIw4YmTMxMgyy4PEVUhFH"
 API_SECRET = "f9BHEpkASNW9S0nd7xe1Iq55ccd0bFrwI8LL0mA0UlIgODhubsX8noG6TnWicvmh"
