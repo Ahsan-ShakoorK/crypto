@@ -42,7 +42,8 @@ def main():
     selected_coin = st.selectbox("Select a coin", coins)
 
     # Fetch trading data for the selected coin
-    data = fetch_trading_data(selected_co
+    data = fetch_trading_data(selected_coin)
+
     # Convert data to pandas DataFrame
     df = pd.DataFrame(data)
 
