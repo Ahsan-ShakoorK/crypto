@@ -4,14 +4,15 @@ import pandas as pd
 
 # Establish connection to MySQL server
 connection = pymysql.connect(
-    host='usa.mysql.database.azure.com',
-    user='dbusa',
-    password='ahsan@123',
-    db='python_db',
+    host='twenty.mysql.database.azure.com',
+    user='ahsan',
+    password='name@123',
+    db='ahsandb',
     charset='utf8mb4',
     cursorclass=pymysql.cursors.DictCursor,
     ssl={'ca': 'DigiCertGlobalRootCA.crt.pem'}
 )
+
 
 # Function to fetch trading data from MySQL for a specific coin
 def fetch_trading_data(coin):
@@ -43,7 +44,6 @@ def main():
 
     # Fetch trading data for the selected coin
     data = fetch_trading_data(selected_coin)
-
     # Convert data to pandas DataFrame
     df = pd.DataFrame(data)
 
