@@ -7,7 +7,7 @@ import pymysql.cursors
 # Connect to the database
 db = pymysql.connect(
     host='usadb.mysql.database.azure.com',
-    user='ahsandb',
+    user='pythondb',
     password='ahsan@123',
     db='pythond',
     charset='utf8mb4',
