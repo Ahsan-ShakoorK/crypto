@@ -18,12 +18,12 @@ connection = pymysql.connect(
 def fetch_trading_data(coin):
     query = f"""
         SELECT price,
+               SUM(CASE WHEN timestamp >= NOW() - INTERVAL 1 MINUTE THEN volume ELSE 0 END) AS volume_1min,
                SUM(CASE WHEN timestamp >= NOW() - INTERVAL 5 MINUTE THEN volume ELSE 0 END) AS volume_5min,
                SUM(CASE WHEN timestamp >= NOW() - INTERVAL 15 MINUTE THEN volume ELSE 0 END) AS volume_15min,
-               SUM(CASE WHEN timestamp >= NOW() - INTERVAL 60 MINUTE THEN volume ELSE 0 END) AS volume_60min,
-               SUM(volume) AS total_coins_traded
+               SUM(CASE WHEN timestamp >= NOW() - INTERVAL 60 MINUTE THEN volume ELSE 0 END) AS volume_60min
         FROM {coin}usdt
-        WHERE timestamp >= NOW() - INTERVAL 1 HOUR
+        WHERE timestamp >= CURDATE() + INTERVAL 1 SECOND
         GROUP BY price
     """
     with connection.cursor() as cursor:
@@ -44,6 +44,7 @@ def main():
 
     # Fetch trading data for the selected coin
     data = fetch_trading_data(selected_coin)
+
     # Convert data to pandas DataFrame
     df = pd.DataFrame(data)
 
