@@ -35,7 +35,7 @@ def fetch_trading_data(coin):
         'volume_15min_before': '15m_b',
         'volume_60min': '60m',
         'volume_60min_before': '60m_b'})
-    # Round the numbers to 2 decimal places
+    # Round the numbers to 8 decimal places
     df = df.round(8)
     df = st.write(df)
     return df
@@ -55,27 +55,17 @@ def main():
     df = fetch_trading_data(selected_coin)
 
     # Inject custom CSS to style the table
-    st.markdown(
-        """
+   # Apply CSS styling to the table
+    table_style = """
         <style>
         .dataframe {
-            font-family: Arial, sans-serif;
-            border-collapse: collapse;
-            width: 200%;
-        }
-        .dataframe th, .dataframe td {
-            border: 3px solid #dddddd;
-            text-align: left;
-            padding: 10x;
-        }
-        .dataframe th {
-            background-color: #dddddd;
-            font-weight: bold;
+            width: 90%;
+            margin: auto;
         }
         </style>
-        """,
-        unsafe_allow_html=True
-    )
+    """
+    st.markdown(table_style, unsafe_allow_html=True)
+
 
 
 
