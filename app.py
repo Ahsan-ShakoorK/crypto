@@ -17,16 +17,17 @@ connection = pymysql.connect(
 def fetch_trading_data(coin):
     query = f"""
         SELECT price,
-               SUM(CASE WHEN timestamp >= NOW() - INTERVAL 5 MINUTE THEN volume ELSE 0 END) AS volume_5min,
-               SUM(CASE WHEN timestamp >= NOW() - INTERVAL 5 MINUTE - INTERVAL 5 MINUTE THEN volume ELSE 0 END) AS volume_5min_before,
-               SUM(CASE WHEN timestamp >= NOW() - INTERVAL 15 MINUTE THEN volume ELSE 0 END) AS volume_15min,
-               SUM(CASE WHEN timestamp >= NOW() - INTERVAL 15 MINUTE - INTERVAL 15 MINUTE THEN volume ELSE 0 END) AS volume_15min_before,
-               SUM(CASE WHEN timestamp >= NOW() - INTERVAL 60 MINUTE THEN volume ELSE 0 END) AS volume_60min,
-               SUM(CASE WHEN timestamp >= NOW() - INTERVAL 60 MINUTE - INTERVAL 60 MINUTE THEN volume ELSE 0 END) AS volume_60min_before
-        FROM {coin}usdt
-        WHERE timestamp >= CURDATE() + INTERVAL 1 SECOND
-        GROUP BY price
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300 + 300) THEN volume ELSE 0 END) AS volume_5min,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300 - 300) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300) THEN volume ELSE 0 END) AS volume_5min_before,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900 + 900) THEN volume ELSE 0 END) AS volume_15min,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900 - 900) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900) THEN volume ELSE 0 END) AS volume_15min_before,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600 + 3600) THEN volume ELSE 0 END) AS volume_60min,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600 - 3600) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600) THEN volume ELSE 0 END) AS volume_60min_before
+    FROM {coin}usdt
+    WHERE timestamp >= CURDATE() + INTERVAL 1 SECOND
+    GROUP BY price
     """
+
     with connection.cursor() as cursor:
         cursor.execute(query)
         data = cursor.fetchall()
