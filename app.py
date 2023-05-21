@@ -28,7 +28,13 @@ def fetch_trading_data(coin):
         GROUP BY price
     """
     df = pd.read_sql_query(query, get_db_connection())
-
+    df = df.rename(columns={
+        'volume_5min': '5m',
+        'volume_5min_before': '5m_b',
+        'volume_15min': '15m',
+        'volume_15min_before': '15m_b',
+        'volume_60min': '60m',
+        'volume_60min_before': '60m_b'})
     # Round the numbers to 2 decimal places
     df = df.round(8)
     df = st.write(df)
@@ -55,12 +61,12 @@ def main():
         .dataframe {
             font-family: Arial, sans-serif;
             border-collapse: collapse;
-            width: 100%;
+            width: 200%;
         }
         .dataframe th, .dataframe td {
-            border: 1px solid #dddddd;
+            border: 3px solid #dddddd;
             text-align: left;
-            padding: 8px;
+            padding: 10x;
         }
         .dataframe th {
             background-color: #dddddd;
