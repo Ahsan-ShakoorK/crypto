@@ -45,7 +45,7 @@ def fetch_trading_data(coin):
         'volume_60min_before': '60m_b'
     })
     # Round the numbers to 2 decimal places
-    df = df.astype(float).round(6)
+    df = df.astype(float).round(8)
  
     return df
 
