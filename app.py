@@ -16,7 +16,7 @@ connection = pymysql.connect(
 # Function to fetch trading data from MySQL for a specific coin
 def fetch_trading_data(coin):
     query = f"""
-        SELECT price,
+        SELECT ROUND(price, 6) AS price,
             SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300 + 300) THEN volume ELSE 0 END) AS volume_5min,
             SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300 - 300) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300) THEN volume ELSE 0 END) AS volume_5min_before,
             SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900 + 900) THEN volume ELSE 0 END) AS volume_15min,
@@ -44,8 +44,6 @@ def fetch_trading_data(coin):
         'volume_60min': '60m',
         'volume_60min_before': '60m_b'
     })
-    # Round the numbers to 2 decimal places
-    df = df.astype(float).round(8)
     df = st.write(df)
     return df
 
