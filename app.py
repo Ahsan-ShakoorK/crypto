@@ -1,7 +1,7 @@
 import streamlit as st
 import pymysql.cursors
 import pandas as pd
-
+import time 
 # Establish connection to MySQL server
 connection = pymysql.connect(
     host='usa.mysql.database.azure.com',
@@ -52,18 +52,19 @@ def fetch_trading_data(coin):
 
 def main():
     # Set Streamlit app title and layout
-    st.title("Cryptocurrency Market Trading Data")
-    st.write("Market data retrieved from MySQL server")
+    # st.title("Cryptocurrency Market Trading Data")
+    # st.write("Market data retrieved from MySQL server")
 
     # Get the list of coins
-    coins = ["sxp", "chess", "blz", "joe", "perl"]
+    coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil"]
 
     # Create a selectbox for coin selection
     selected_coin = st.selectbox("Select a coin", coins)
 
     # Fetch trading data for the selected coin
     df = fetch_trading_data(selected_coin)
-
+    time.sleep(5)
+    st.experimental_rerun()
 
 
 if __name__ == '__main__':
