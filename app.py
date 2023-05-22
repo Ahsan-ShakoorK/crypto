@@ -61,7 +61,7 @@ def main():
 
     # Fetch trading data for the selected coin
     df = fetch_trading_data(selected_coin)
-    time.sleep(5)
+    time.sleep(2)
     st.experimental_rerun()
 
 
