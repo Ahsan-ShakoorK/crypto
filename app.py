@@ -1,7 +1,8 @@
 import streamlit as st
 import pymysql.cursors
 import pandas as pd
-import time 
+import time
+
 # Establish connection to MySQL server
 connection = pymysql.connect(
     host='usa.mysql.database.azure.com',
@@ -15,7 +16,7 @@ connection = pymysql.connect(
 
 # Function to fetch trading data from MySQL for a specific coin
 def fetch_trading_data(coin):
-    query = f"""
+    query_5min = f"""
         SELECT ROUND(price, 6) AS price,
             SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300 + 300) THEN volume ELSE 0 END) AS volume_5min,
             SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300 - 300) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300) THEN volume ELSE 0 END) AS volume_5min_before,
@@ -23,20 +24,32 @@ def fetch_trading_data(coin):
             SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900 - 900) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900) THEN volume ELSE 0 END) AS volume_15min_before,
             SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600 + 3600) THEN volume ELSE 0 END) AS volume_60min,
             SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600 - 3600) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600) THEN volume ELSE 0 END) AS volume_60min_before
-    FROM {coin}usdt
-    WHERE timestamp >= CURDATE() + INTERVAL 1 SECOND
-    GROUP BY price
+        FROM {coin}usdt
+        WHERE timestamp >= CURDATE() + INTERVAL 1 SECOND
+        GROUP BY price
+    """
+
+    query_daily = f"""
+        SELECT DATE(timestamp) AS date,
+            HOUR(timestamp) AS hour,
+            SUM(volume) AS total_volume
+        FROM {coin}usdt
+        WHERE timestamp >= CURDATE() - INTERVAL 7 DAY
+        GROUP BY date, hour
     """
 
     with connection.cursor() as cursor:
-        cursor.execute(query)
-        data = cursor.fetchall()
-    
+        cursor.execute(query_5min)
+        data_5min = cursor.fetchall()
+
+        cursor.execute(query_daily)
+        data_daily = cursor.fetchall()
+
     # Filter out rows where all volume columns are 0
-    df = pd.DataFrame(data)
+    df_5min = pd.DataFrame(data_5min)
     volume_columns = ['volume_5min', 'volume_5min_before', 'volume_15min', 'volume_15min_before', 'volume_60min', 'volume_60min_before']
-    df = df[~(df[volume_columns] == 0).all(axis=1)]
-    df = df.rename(columns={
+    df_5min = df_5min[~(df_5min[volume_columns] == 0).all(axis=1)]
+    df_5min = df_5min.rename(columns={
         'volume_5min': '5m',
         'volume_5min_before': '5m_b',
         'volume_15min': '15m',
@@ -44,8 +57,17 @@ def fetch_trading_data(coin):
         'volume_60min': '60m',
         'volume_60min_before': '60m_b'
     })
-    df = st.write(df)
-    return df
+
+    df_daily = pd.DataFrame(data_daily)
+    df_daily = df_daily.pivot(index='hour', columns='date', values='total_volume')
+    df_daily = df_daily.rename_axis(None, axis=1)  # Remove axis labels for cleaner table
+
+    # Display tables
+    st.subheader("5-Minute Trading Data")
+    st.write(df_5min)
+
+    st.subheader("Daily Trading Data with Hourly Time Frames")
+    st.write(df_daily)
 
 
 def main():
@@ -60,7 +82,7 @@ def main():
     selected_coin = st.selectbox("Select a coin", coins)
 
     # Fetch trading data for the selected coin
-    df = fetch_trading_data(selected_coin)
+    fetch_trading_data(selected_coin)
     time.sleep(5)
     st.experimental_rerun()
 
