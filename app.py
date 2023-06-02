@@ -32,7 +32,8 @@ def fetch_trading_data(coin):
     query_hourly = f"""
         SELECT DATE(timestamp) AS date,
             HOUR(timestamp) AS hour,
-            ROUND(AVG(price), 6) AS price
+            ROUND(AVG(price), 6) AS price,
+            SUM(volume) AS total_volume
         FROM {coin}usdt
         WHERE timestamp >= CURDATE() - INTERVAL 7 DAY
         GROUP BY date, hour
@@ -60,8 +61,8 @@ def fetch_trading_data(coin):
     })
 
     df_hourly = pd.DataFrame(data_hourly)
-    df_hourly = df_hourly.pivot(index='date', columns='hour', values='price')
-    df_hourly.columns = [f'{hour}h' for hour in df_hourly.columns]
+    df_hourly = df_hourly.pivot(index='date', columns='hour', values=['price', 'total_volume'])
+    df_hourly.columns = [f'{col[0]}_{col[1]}h' for col in df_hourly.columns]
 
     # Display tables
     st.subheader("5-Minute Trading Data")
