@@ -30,14 +30,13 @@ def fetch_trading_data(coin):
     """
 
     query_hourly = f"""
-        SELECT DATE(timestamp) AS date,
-            HOUR(timestamp) AS hour,
-            GROUP_CONCAT(ROUND(price, 6)) AS prices,
+        SELECT HOUR(timestamp) AS hour,
+            GROUP_CONCAT(DISTINCT ROUND(price, 6) ORDER BY price SEPARATOR ', ') AS prices,
             GROUP_CONCAT(volume) AS volumes
         FROM {coin}usdt
         WHERE timestamp >= CURDATE() - INTERVAL 7 DAY
-        GROUP BY date, hour
-        ORDER BY date DESC, hour ASC
+        GROUP BY hour
+        ORDER BY hour ASC
     """
 
     with connection.cursor() as cursor:
@@ -61,15 +60,19 @@ def fetch_trading_data(coin):
     })
 
     df_hourly = pd.DataFrame(data_hourly)
-    df_hourly = df_hourly.pivot(index='date', columns='hour', values=['prices', 'volumes'])
-    df_hourly.columns = [f'{col[0]}_{col[1]}h' for col in df_hourly.columns]
+    df_hourly['prices'] = df_hourly['prices'].apply(lambda x: x.split(', '))
+    df_hourly = df_hourly.reindex(columns=['hour', 'prices', 'volumes'])
 
     # Display tables
     st.subheader("5-Minute Trading Data")
     st.write(df_5min)
 
     st.subheader("Hourly Trading Data")
-    st.write(df_hourly)
+    selected_date = st.selectbox("Select a date", df_hourly['hour'].unique())
+    filtered_data = df_hourly[df_hourly['hour'] == selected_date]
+    filtered_data = filtered_data.explode('prices').reset_index(drop=True)
+    filtered_data['prices'] = filtered_data['prices'].str.replace('[\[\]]', '')
+    st.write(filtered_data)
 
 
 def main():
