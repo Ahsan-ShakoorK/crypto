@@ -1,89 +1,69 @@
-import time
-from binance.client import Client
+import streamlit as st
 import pymysql.cursors
 import pandas as pd
-import threading
-import mysql.connector
+import time 
+# Establish connection to MySQL server
+connection = pymysql.connect(
+    host='usa.mysql.database.azure.com',
+    user='ahsan',
+    password='name@123',
+    db='sqldb',
+    charset='utf8mb4',
+    cursorclass=pymysql.cursors.DictCursor,
+    ssl={'ca': 'DigiCertGlobalRootCA.crt.pem'}
+)
+
+# Function to fetch trading data from MySQL for a specific coin
+def fetch_trading_data(coin):
+    query = f"""
+        SELECT ROUND(price, 6) AS price,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300 + 300) THEN volume ELSE 0 END) AS volume_5min,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300 - 300) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300) THEN volume ELSE 0 END) AS volume_5min_before,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900 + 900) THEN volume ELSE 0 END) AS volume_15min,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900 - 900) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900) THEN volume ELSE 0 END) AS volume_15min_before,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600 + 3600) THEN volume ELSE 0 END) AS volume_60min,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600 - 3600) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600) THEN volume ELSE 0 END) AS volume_60min_before
+    FROM {coin}usdt
+    WHERE timestamp >= CURDATE() + INTERVAL 1 SECOND
+    GROUP BY price
+    """
+
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        data = cursor.fetchall()
+    
+    # Filter out rows where all volume columns are 0
+    df = pd.DataFrame(data)
+    volume_columns = ['volume_5min', 'volume_5min_before', 'volume_15min', 'volume_15min_before', 'volume_60min', 'volume_60min_before']
+    df = df[~(df[volume_columns] == 0).all(axis=1)]
+    df = df.rename(columns={
+        'volume_5min': '5m',
+        'volume_5min_before': '5m_b',
+        'volume_15min': '15m',
+        'volume_15min_before': '15m_b',
+        'volume_60min': '60m',
+        'volume_60min_before': '60m_b'
+    })
+    df = st.write(df)
+    return df
 
 
-client = Client()
+def main():
+    # Set Streamlit app title and layout
+    # st.title("Cryptocurrency Market Trading Data")
+    # st.write("Market data retrieved from MySQL server")
 
-# List of coins to fetch data for
-coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil"]
+    # Get the list of coins
+    coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil"]
 
-def get_db_connection():
-    connection = pymysql.connect(
-        host='localhost',
-        user='root',
-        password='Ran@123456',
-        db='ransql',
-        charset='utf8',
-        cursorclass=pymysql.cursors.DictCursor,
-    )
-    return connection
+    # Create a selectbox for coin selection
+    selected_coin = st.selectbox("Select a coin", coins)
 
-# Create tables for each coin
-def create_tables():
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    for coin in coins:
-        cursor.execute(f"""
-            CREATE TABLE IF NOT EXISTS {coin}usdt (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                price DECIMAL(18, 8),
-                volume DECIMAL(18, 8)
-            )
-        """)
-    connection.commit()
-    connection.close()
-def fetch_and_store_recent_trades(coin):
-    last_trade_timestamp = None
-    while True:
-        try:
-            connection = get_db_connection()
-            cursor = connection.cursor()
-            trades = client.get_recent_trades(symbol=f'{coin.upper()}USDT')
-            for trade in trades:
-                trade_timestamp = pd.to_datetime(trade['time'], unit='ms')
-                if last_trade_timestamp is None or trade_timestamp > last_trade_timestamp:
-                    cursor.execute(f"INSERT INTO {coin}usdt (timestamp, price, volume) VALUES (%s, %s, %s)", (trade_timestamp, trade['price'], trade['qty']))
-                    last_trade_timestamp = trade_timestamp
-            connection.commit()
-        except Exception as e:
-            print(f'Error fetching and storing trades for {coin}: {e}')
-            connection.rollback()
-            # Wait for 30 seconds before retrying
-            time.sleep(30)
-            continue
-        finally:
-            connection.close()
-        time.sleep(5)
+    # Fetch trading data for the selected coin
+    df = fetch_trading_data(selected_coin)
+    time.sleep(5)
+    st.experimental_rerun()
 
 
-# Function to delete data older than 1 hour
-def delete_old_data(coin):
-    while True:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        try:
-            cursor.execute(f"DELETE FROM {coin}usdt WHERE timestamp < NOW() - INTERVAL 1 HOUR")
-            connection.commit()
-        except Exception as e:
-            print(f'Error deleting old data for {coin}: {e}')
-            connection.rollback()
-        finally:
-            connection.close()
-        time.sleep(3000)  # Sleep for 50 minutes
-
-# Start the threads
-def start_threads():
-    create_tables()
-    for coin in coins:
-        threading.Thread(target=fetch_and_store_recent_trades, args=(coin,)).start()
-        threading.Thread(target=delete_old_data, args=(coin,)).start()
-
-start_threads()
-
-while True:
-    time.sleep(2)
+if __name__ == '__main__':
+    main()
