@@ -14,10 +14,16 @@ connection = pymysql.connect(
     ssl={'ca': 'DigiCertGlobalRootCA.crt.pem'}
 )
 
+# Function to fetch trading data from MySQL for a specific coin
 def fetch_trading_data(coin):
     query_5min = f"""
         SELECT ROUND(price, 6) AS price,
-            SUM(volume) AS total_volume
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300 + 300) THEN volume ELSE 0 END) AS volume_5min,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300 - 300) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300) THEN volume ELSE 0 END) AS volume_5min_before,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900 + 900) THEN volume ELSE 0 END) AS volume_15min,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900 - 900) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900) THEN volume ELSE 0 END) AS volume_15min_before,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600 + 3600) THEN volume ELSE 0 END) AS volume_60min,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600 - 3600) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600) THEN volume ELSE 0 END) AS volume_60min_before
         FROM {coin}usdt
         WHERE timestamp >= CURDATE() + INTERVAL 1 SECOND
         GROUP BY price
@@ -40,9 +46,24 @@ def fetch_trading_data(coin):
         cursor.execute(query_hourly)
         data_hourly = cursor.fetchall()
 
+    # Filter out rows where all volume columns are 0
     df_5min = pd.DataFrame(data_5min)
-    df_hourly = pd.DataFrame(data_hourly)
+    volume_columns = ['volume_5min', 'volume_5min_before', 'volume_15min', 'volume_15min_before', 'volume_60min', 'volume_60min_before']
+    df_5min = df_5min[~(df_5min[volume_columns] == 0).all(axis=1)]
+    df_5min = df_5min.rename(columns={
+        'volume_5min': '5m',
+        'volume_5min_before': '5m_b',
+        'volume_15min': '15m',
+        'volume_15min_before': '15m_b',
+        'volume_60min': '60m',
+        'volume_60min_before': '60m_b'
+    })
 
+    df_hourly = pd.DataFrame(data_hourly)
+    df_hourly['prices'] = df_hourly['prices'].apply(lambda x: x.split(', '))
+    df_hourly = df_hourly.reindex(columns=['hour', 'prices', 'volumes'])
+
+    # Display tables
     st.subheader("5-Minute Trading Data")
     st.write(df_5min)
 
