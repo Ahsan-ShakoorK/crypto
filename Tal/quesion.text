@@ -1,0 +1,30 @@
+
+api_key = os.getenv('vijG9ARQVjevGky2bkTgFACUMmRJBVxVqwtzDIONOToNIw4YmTMxMgyy4PEVUhFH')
+api_secret = os.getenv('f9BHEpkASNW9S0nd7xe1Iq55ccd0bFrwI8LL0mA0UlIgODhubsX8noG6TnWicvmh')
+
+API_KEY = "vijG9ARQVjevGky2bkTgFACUMmRJBVxVqwtzDIONOToNIw4YmTMxMgyy4PEVUhFH"
+API_SECRET = "f9BHEpkASNW9S0nd7xe1Iq55ccd0bFrwI8LL0mA0UlIgODhubsX8noG6TnWicvmh"
+
+    api_key = '50eb99a85c56c3c3d1d4491e53f9ababce42f813793ef13da8f1dd93e7ecd920'  # your CryptoCompare API key
+
+
+i am taking  data from database from https://www.cryptocompare.com/cryptopian/api-keys  i have a api key
+I want to make a web app of  market trade data of crypto currency
+i want to see that how many tranactions are happen in last 1 mint time frame with the  cureent price and amount of coins that are trade
+i want a 6 column table with as much rows as possible
+1. current local time
+2. Cureent price of coin,
+3.  Amount of coin which are trade
+4. 5 mint ,15 mint and 60 mint, how many total amount of coin trade according to current price  
+Note. the point number 4 means.
+a. 15 mint Summarize  all the amount of coin that are trade in last 15 mint according to current price
+b. 60 mint include all the amount of coin that are trade in last 15 mint to 60 mint according to current price
+c. 5 mint include all the amount of coin that are trade in last 0 mint to 5 mint according to current price
+
+i want a table with this 6 columns and with as much rows as possible each row is differ by the 1 second
+and add also a search box where i can seach the coin with usdt only if write "et" it suggest me ethusdt
+Search box suggest me the coin when i am searhcing
+Note:  search box must take list from api and suggest me the coin name when i am searching
+
+use python 
+streamlit 
