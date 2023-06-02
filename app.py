@@ -29,19 +29,21 @@ def fetch_trading_data(coin):
         GROUP BY price
     """
 
-    query_daily = f"""
-        SELECT price, SUM(volume) AS total_volume
+    query_hourly = f"""
+        SELECT HOUR(timestamp) AS hour,
+            ROUND(AVG(price), 6) AS price,
+            SUM(volume) AS total_volume
         FROM {coin}usdt
         WHERE timestamp >= CURDATE() - INTERVAL 7 DAY
-        GROUP BY price
+        GROUP BY hour
     """
 
     with connection.cursor() as cursor:
         cursor.execute(query_5min)
         data_5min = cursor.fetchall()
 
-        cursor.execute(query_daily)
-        data_daily = cursor.fetchall()
+        cursor.execute(query_hourly)
+        data_hourly = cursor.fetchall()
 
     # Filter out rows where all volume columns are 0
     df_5min = pd.DataFrame(data_5min)
@@ -56,8 +58,9 @@ def fetch_trading_data(coin):
         'volume_60min_before': '60m_b'
     })
 
-    df_daily = pd.DataFrame(data_daily)
-    df_daily = df_daily.rename(columns={
+    df_hourly = pd.DataFrame(data_hourly)
+    df_hourly = df_hourly.rename(columns={
+        'hour': 'Hour',
         'price': 'Price',
         'total_volume': 'Total Volume'
     })
@@ -66,8 +69,8 @@ def fetch_trading_data(coin):
     st.subheader("5-Minute Trading Data")
     st.write(df_5min)
 
-    st.subheader("Daily Trading Data")
-    st.write(df_daily)
+    st.subheader("Hourly Trading Data")
+    st.write(df_hourly)
 
 
 def main():
