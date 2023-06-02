@@ -61,7 +61,6 @@ def fetch_trading_data(coin):
 
     df_hourly = pd.DataFrame(data_hourly)
     df_hourly['prices'] = df_hourly['prices'].apply(lambda x: x.split(', '))
-    df_hourly['volumes'] = df_hourly['volumes'].apply(lambda x: sum(float(volume) for volume in x.split(', ')))
     df_hourly = df_hourly.reindex(columns=['hour', 'prices', 'volumes'])
 
     # Display tables
