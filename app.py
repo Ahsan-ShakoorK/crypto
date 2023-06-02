@@ -13,6 +13,7 @@ connection = pymysql.connect(
     cursorclass=pymysql.cursors.DictCursor,
     ssl={'ca': 'DigiCertGlobalRootCA.crt.pem'}
 )
+
 # Function to fetch trading data from MySQL for a specific coin
 def fetch_trading_data(coin):
     query_5min = f"""
@@ -31,7 +32,7 @@ def fetch_trading_data(coin):
     query_hourly = f"""
         SELECT HOUR(timestamp) AS hour,
             GROUP_CONCAT(DISTINCT ROUND(price, 6) ORDER BY price SEPARATOR ', ') AS prices,
-            GROUP_CONCAT(volume ORDER BY price) AS volumes
+            GROUP_CONCAT(volume) AS volumes
         FROM {coin}usdt
         WHERE timestamp >= CURDATE() - INTERVAL 7 DAY
         GROUP BY hour
@@ -60,11 +61,7 @@ def fetch_trading_data(coin):
 
     df_hourly = pd.DataFrame(data_hourly)
     df_hourly['prices'] = df_hourly['prices'].apply(lambda x: x.split(', '))
-    df_hourly['volumes'] = df_hourly['volumes'].apply(lambda x: x.split(', '))
-    df_hourly = df_hourly.explode(['prices', 'volumes']).reset_index(drop=True)
-    df_hourly['prices'] = df_hourly['prices'].str.replace('[\[\]]', '')
-    df_hourly['volumes'] = df_hourly.groupby('prices')['volumes'].transform('sum')
-    df_hourly = df_hourly.drop_duplicates().reset_index(drop=True)
+    df_hourly = df_hourly.reindex(columns=['hour', 'prices', 'volumes'])
 
     # Display tables
     st.subheader("Trading Data real time")
@@ -73,6 +70,8 @@ def fetch_trading_data(coin):
     st.subheader("Hourly Trading Data")
     selected_date = st.selectbox("Select a date", df_hourly['hour'].unique())
     filtered_data = df_hourly[df_hourly['hour'] == selected_date]
+    filtered_data = filtered_data.explode('prices').reset_index(drop=True)
+    filtered_data['prices'] = filtered_data['prices'].str.replace('[\[\]]', '')
     st.write(filtered_data)
 
 
