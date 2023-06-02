@@ -64,7 +64,7 @@ def fetch_trading_data(coin):
     df_hourly = df_hourly.reindex(columns=['hour', 'prices', 'volumes'])
 
     # Display tables
-    st.subheader("5-Minute Trading Data")
+    st.subheader("Trading Data real time")
     st.write(df_5min)
 
     st.subheader("Hourly Trading Data")
