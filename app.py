@@ -50,29 +50,47 @@ def fetch_trading_data(coin):
     df_5min = pd.DataFrame(data_5min)
     volume_columns = ['volume_5min', 'volume_5min_before', 'volume_15min', 'volume_15min_before', 'volume_60min', 'volume_60min_before']
     df_5min = df_5min[~(df_5min[volume_columns] == 0).all(axis=1)]
-    df_5min = df_5min.reindex(columns=['price', 'volume_5min', 'volume_5min_before', 'volume_15min', 'volume_15min_before', 'volume_60min', 'volume_60min_before'])
+    df_5min = df_5min.rename(columns={
+        'volume_5min': '5m',
+        'volume_5min_before': '5m_b',
+        'volume_15min': '15m',
+        'volume_15min_before': '15m_b',
+        'volume_60min': '60m',
+        'volume_60min_before': '60m_b'
+    })
 
     df_hourly = pd.DataFrame(data_hourly)
     df_hourly['prices'] = df_hourly['prices'].apply(lambda x: x.split(', '))
-    df_hourly['volumes'] = df_hourly['volumes'].apply(lambda x: x.split(', '))
-    df_hourly['volumes'] = df_hourly['volumes'].apply(lambda x: sum(map(float, x)))
     df_hourly = df_hourly.reindex(columns=['hour', 'prices', 'volumes'])
 
-    return df_5min, df_hourly
-
-# Main Streamlit app
-def main():
-    st.title("Crypto Trading Data")
-
-    coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil"]
-    
-    df_5min, df_hourly = fetch_trading_data(coin)
-
-    st.subheader("5-Minute Trading Data")
+    # Display tables
+    st.subheader("Trading Data real time")
     st.write(df_5min)
 
     st.subheader("Hourly Trading Data")
-    st.write(df_hourly)
+    selected_date = st.selectbox("Select a date", df_hourly['hour'].unique())
+    filtered_data = df_hourly[df_hourly['hour'] == selected_date]
+    filtered_data = filtered_data.explode('prices').reset_index(drop=True)
+    filtered_data['prices'] = filtered_data['prices'].str.replace('[\[\]]', '')
+    st.write(filtered_data)
+
+
+def main():
+    # Set Streamlit app title and layout
+    # st.title("Cryptocurrency Market Trading Data")
+    # st.write("Market data retrieved from MySQL server")
+
+    # Get the list of coins
+    coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil"]
+
+    # Create a selectbox for coin selection
+    selected_coin = st.selectbox("Select a coin", coins)
+
+    # Fetch trading data for the selected coin
+    fetch_trading_data(selected_coin)
+    time.sleep(5)
+    st.experimental_rerun()
+
 
 if __name__ == '__main__':
     main()
