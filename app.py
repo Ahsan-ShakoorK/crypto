@@ -30,12 +30,10 @@ def fetch_trading_data(coin):
     """
 
     query_daily = f"""
-        SELECT DATE(timestamp) AS date,
-            HOUR(timestamp) AS hour,
-            SUM(volume) AS total_volume
+        SELECT price, SUM(volume) AS total_volume
         FROM {coin}usdt
         WHERE timestamp >= CURDATE() - INTERVAL 7 DAY
-        GROUP BY date, hour
+        GROUP BY price
     """
 
     with connection.cursor() as cursor:
@@ -59,14 +57,16 @@ def fetch_trading_data(coin):
     })
 
     df_daily = pd.DataFrame(data_daily)
-    df_daily = df_daily.pivot(index='hour', columns='date', values='total_volume')
-    df_daily = df_daily.rename_axis(None, axis=1)  # Remove axis labels for cleaner table
+    df_daily = df_daily.rename(columns={
+        'price': 'Price',
+        'total_volume': 'Total Volume'
+    })
 
     # Display tables
     st.subheader("5-Minute Trading Data")
     st.write(df_5min)
 
-    st.subheader("Daily Trading Data with Hourly Time Frames")
+    st.subheader("Daily Trading Data")
     st.write(df_daily)
 
 
