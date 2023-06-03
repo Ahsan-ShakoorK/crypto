@@ -29,22 +29,9 @@ def fetch_trading_data(coin):
         GROUP BY price
     """
 
-    query_hourly = f"""
-        SELECT HOUR(timestamp) AS hour,
-            GROUP_CONCAT(DISTINCT ROUND(price, 6) ORDER BY price SEPARATOR ', ') AS prices,
-            GROUP_CONCAT(volume) AS volumes
-        FROM {coin}usdt
-        WHERE timestamp >= CURDATE() - INTERVAL 7 DAY
-        GROUP BY hour
-        ORDER BY hour ASC
-    """
-
     with connection.cursor() as cursor:
         cursor.execute(query_5min)
         data_5min = cursor.fetchall()
-
-        cursor.execute(query_hourly)
-        data_hourly = cursor.fetchall()
 
     # Filter out rows where all volume columns are 0
     df_5min = pd.DataFrame(data_5min)
@@ -59,20 +46,9 @@ def fetch_trading_data(coin):
         'volume_60min_before': '60m_b'
     })
 
-    df_hourly = pd.DataFrame(data_hourly)
-    df_hourly['prices'] = df_hourly['prices'].apply(lambda x: x.split(', '))
-    df_hourly = df_hourly.reindex(columns=['hour', 'prices', 'volumes'])
-
-    # Display tables
+    # Display table
     st.subheader("Trading Data real time")
     st.write(df_5min)
-
-    st.subheader("Hourly Trading Data")
-    selected_date = st.selectbox("Select a date", df_hourly['hour'].unique())
-    filtered_data = df_hourly[df_hourly['hour'] == selected_date]
-    filtered_data = filtered_data.explode('prices').reset_index(drop=True)
-    filtered_data['prices'] = filtered_data['prices'].str.replace('[\[\]]', '')
-    st.write(filtered_data)
 
 
 def main():
@@ -82,7 +58,6 @@ def main():
 
     # Get the list of coins
     coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil", "cfx", "adx", "chz", "bel", "alpaca", "elf", "epx", "pros", "t", "dar", "agix", "mob", "id", "trx", "key", "tru", "amb", "magic", "lina", "lever"]
-
 
     # Create a selectbox for coin selection
     selected_coin = st.selectbox("Select a coin", coins)
