@@ -29,43 +29,9 @@ def fetch_trading_data(coin):
         GROUP BY price
     """
 
-    query_daily = f"""
-        SELECT price,
-            SUM(CASE WHEN HOUR(timestamp) = 0 THEN volume ELSE 0 END) AS hour_0,
-            SUM(CASE WHEN HOUR(timestamp) = 1 THEN volume ELSE 0 END) AS hour_1,
-            SUM(CASE WHEN HOUR(timestamp) = 2 THEN volume ELSE 0 END) AS hour_2,
-            SUM(CASE WHEN HOUR(timestamp) = 3 THEN volume ELSE 0 END) AS hour_3,
-            SUM(CASE WHEN HOUR(timestamp) = 4 THEN volume ELSE 0 END) AS hour_4,
-            SUM(CASE WHEN HOUR(timestamp) = 5 THEN volume ELSE 0 END) AS hour_5,
-            SUM(CASE WHEN HOUR(timestamp) = 6 THEN volume ELSE 0 END) AS hour_6,
-            SUM(CASE WHEN HOUR(timestamp) = 7 THEN volume ELSE 0 END) AS hour_7,
-            SUM(CASE WHEN HOUR(timestamp) = 8 THEN volume ELSE 0 END) AS hour_8,
-            SUM(CASE WHEN HOUR(timestamp) = 9 THEN volume ELSE 0 END) AS hour_9,
-            SUM(CASE WHEN HOUR(timestamp) = 10 THEN volume ELSE 0 END) AS hour_10,
-            SUM(CASE WHEN HOUR(timestamp) = 11 THEN volume ELSE 0 END) AS hour_11,
-            SUM(CASE WHEN HOUR(timestamp) = 12 THEN volume ELSE 0 END) AS hour_12,
-            SUM(CASE WHEN HOUR(timestamp) = 13 THEN volume ELSE 0 END) AS hour_13,
-            SUM(CASE WHEN HOUR(timestamp) = 14 THEN volume ELSE 0 END) AS hour_14,
-            SUM(CASE WHEN HOUR(timestamp) = 15 THEN volume ELSE 0 END) AS hour_15,
-            SUM(CASE WHEN HOUR(timestamp) = 16 THEN volume ELSE 0 END) AS hour_16,
-            SUM(CASE WHEN HOUR(timestamp) = 17 THEN volume ELSE 0 END) AS hour_17,
-            SUM(CASE WHEN HOUR(timestamp) = 18 THEN volume ELSE 0 END) AS hour_18,
-            SUM(CASE WHEN HOUR(timestamp) = 19 THEN volume ELSE 0 END) AS hour_19,
-            SUM(CASE WHEN HOUR(timestamp) = 20 THEN volume ELSE 0 END) AS hour_20,
-            SUM(CASE WHEN HOUR(timestamp) = 21 THEN volume ELSE 0 END) AS hour_21,
-            SUM(CASE WHEN HOUR(timestamp) = 22 THEN volume ELSE 0 END) AS hour_22,
-            SUM(CASE WHEN HOUR(timestamp) = 23 THEN volume ELSE 0 END) AS hour_23
-        FROM {coin}usdt
-        WHERE timestamp >= CURDATE() - INTERVAL 7 DAY
-        GROUP BY price
-    """
-
     with connection.cursor() as cursor:
         cursor.execute(query_5min)
         data_5min = cursor.fetchall()
-
-        cursor.execute(query_daily)
-        data_daily = cursor.fetchall()
 
     # Filter out rows where all volume columns are 0
     df_5min = pd.DataFrame(data_5min)
@@ -80,16 +46,9 @@ def fetch_trading_data(coin):
         'volume_60min_before': '60m_b'
     })
 
-    df_daily = pd.DataFrame(data_daily)
-
     # Display table
     st.subheader("Trading Data real time")
     st.write(df_5min)
-
-    st.subheader("Daily Trading Data")
-    selected_date = st.selectbox("Select a date", df_daily['date'].unique())
-    filtered_data = df_daily[df_daily['date'] == selected_date]
-    st.write(filtered_data)
 
 
 def main():
