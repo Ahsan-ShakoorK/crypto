@@ -47,36 +47,9 @@ def fetch_trading_data(coin):
     })
 
     # Display table
-    st.subheader("Trading Data Real-time")
+    st.subheader("Trading Data real time")
     st.write(df_5min)
 
-    # Fetch daily chart data for the selected coin
-    query_daily = f"""
-        SELECT *
-        FROM {coin}usdt
-        WHERE timestamp >= CURDATE() - INTERVAL 6 DAY
-        ORDER BY timestamp
-    """
-
-    with connection.cursor() as cursor:
-        cursor.execute(query_daily)
-        data_daily = cursor.fetchall()
-
-    # Create daily chart table
-    df_daily = pd.DataFrame(data_daily)
-    st.subheader("Daily Chart")
-    st.write(df_daily)
-
-    # Create clickable dates to open daily chart for a specific date
-    unique_dates = df_daily['timestamp'].dt.date.unique()
-
-    selected_date = st.selectbox("Select a date", unique_dates)
-
-    # Filter daily chart data for the selected date
-    filtered_data = df_daily[df_daily['timestamp'].dt.date == selected_date]
-
-    # Display filtered daily chart data
-    st.write(filtered_data)
 
 def main():
     # Set Streamlit app title and layout
@@ -93,6 +66,7 @@ def main():
     fetch_trading_data(selected_coin)
     time.sleep(5)
     st.experimental_rerun()
+
 
 if __name__ == '__main__':
     main()
