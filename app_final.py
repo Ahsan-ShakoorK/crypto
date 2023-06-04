@@ -15,7 +15,7 @@ connection = pymysql.connect(
 
 # Function to fetch trading data from MySQL for a specific coin
 def fetch_trading_data(coin):
-    query = f"""
+    uery = f"""
         SELECT ROUND(price, 6) AS price,
             SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300 + 300) THEN volume ELSE 0 END) AS volume_5min,
             SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300 - 300) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300) THEN volume ELSE 0 END) AS volume_5min_before,
@@ -25,7 +25,7 @@ def fetch_trading_data(coin):
             SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600 - 3600) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600) THEN volume ELSE 0 END) AS volume_60min_before
     FROM {coin}usdt
     WHERE timestamp >= CURDATE() + INTERVAL 1 SECOND
-    GROUP BY price
+    GROUP BY priceq
     """
 
     with connection.cursor() as cursor:
