@@ -1,16 +1,10 @@
 import streamlit as st
-import pyodbc
+from sqlalchemy import create_engine
 import pandas as pd
-from datetime import datetime, timedelta
 
 def get_db_connection():
-    connection = pyodbc.connect(
-        driver='{ODBC Driver 17 for SQL Server}',
-        server='A2NWPLSK14SQL-v06.shr.prod.iad2.secureserver.net',
-        database='db_ran',
-        uid='dbahsantrade',
-        pwd='Pak@1947'
-    )
+    engine = create_engine('mssql+pyodbc://dbahsantrade:Pak@1947@A2NWPLSK14SQL-v06.shr.prod.iad2.secureserver.net/db_ran?driver=ODBC+Driver+17+for+SQL+Server')
+    connection = engine.connect()
     return connection
 
 def fetch_data(coin):
@@ -27,17 +21,11 @@ def fetch_data(coin):
         WHERE timestamp >= GETDATE()
         GROUP BY price
     """
-    ...
-
-
-
     connection = get_db_connection()
     df = pd.read_sql_query(query, connection)
     connection.close()
 
     return df
-
-
 
 def main():
     # Set Streamlit app title and layout
