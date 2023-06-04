@@ -1,7 +1,7 @@
 import streamlit as st
 import pyodbc
 import pandas as pd
-import time
+from datetime import datetime, timedelta
 
 def get_db_connection():
     connection = pyodbc.connect(
@@ -15,8 +15,10 @@ def get_db_connection():
 
 def fetch_data(coin):
     query = f"""
-        SELECT price, volume, timestamp
+        SELECT price, SUM(volume) AS total_volume
         FROM {coin}usdt
+        WHERE timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) - 5, 0)
+        GROUP BY price
     """
 
     connection = get_db_connection()
@@ -41,7 +43,6 @@ def main():
 
     # Display the data
     st.dataframe(df)
-    time.sleep(5)
-    st.experimental_rerun()
+
 if __name__ == '__main__':
     main()
