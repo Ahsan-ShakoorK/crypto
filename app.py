@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 def get_db_connection():
     connection = pyodbc.connect(
-        driver='{SQL Server}',
+        driver='{ODBC Driver 17 for SQL Server}',
         server='A2NWPLSK14SQL-v06.shr.prod.iad2.secureserver.net',
         database='db_ran',
         uid='dbahsantrade',
