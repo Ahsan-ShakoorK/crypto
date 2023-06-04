@@ -23,7 +23,7 @@ def fetch_data(coin):
             SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600 + 3600, '19700101') THEN volume ELSE 0 END) AS volume_60min,
             SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600 - 3600, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600, '19700101') THEN volume ELSE 0 END) AS volume_60min_before
         FROM {coin}usdt
-        WHERE timestamp >= CAST(CAST(GETDATE() AS DATE) AS DATETIME) + '00:00:01'
+        WHERE timestamp >= DATEADD(DAY, DATEDIFF(DAY, 0, GETDATE()), 0)
         GROUP BY price
     """
 
@@ -32,8 +32,6 @@ def fetch_data(coin):
     connection.close()
 
     return df
-
-
 
 def main():
     # Set Streamlit app title and layout
