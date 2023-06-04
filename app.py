@@ -22,7 +22,7 @@ def fetch_data(coin):
             SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -60, GETDATE()) THEN volume ELSE 0 END) AS past_60min_volume
         FROM {coin}usdt
         WHERE timestamp >= DATEADD(MINUTE, -60, GETDATE())
-        GROUP BY price
+        GROUP BY price, DATEPART(MINUTE, timestamp)
     """
 
     connection = get_db_connection()
@@ -30,6 +30,7 @@ def fetch_data(coin):
     connection.close()
 
     return df
+
 
 def main():
     # Set Streamlit app title and layout
