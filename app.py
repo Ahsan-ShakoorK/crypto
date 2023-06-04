@@ -17,15 +17,15 @@ def get_db_connection():
 def fetch_data(coin):
     query = f"""
         SELECT price,
-            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) / 300 * 300, 0) AND timestamp < DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) / 300 * 300 + 5, 0) THEN volume ELSE 0 END) AS '5m',
-            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) / 300 * 300 - 5, 0) AND timestamp < DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) / 300 * 300, 0) THEN volume ELSE 0 END) AS '5m_before',
-            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) / 900 * 900, 0) AND timestamp < DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) / 900 * 900 + 15, 0) THEN volume ELSE 0 END) AS '15m',
-            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) / 900 * 900 - 15, 0) AND timestamp < DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) / 900 * 900, 0) THEN volume ELSE 0 END) AS '15m_before',
-            SUM(CASE WHEN timestamp >= DATEADD(HOUR, DATEDIFF(HOUR, 0, GETDATE()), 0) AND timestamp < DATEADD(HOUR, DATEDIFF(HOUR, 0, GETDATE()) + 1, 0) THEN volume ELSE 0 END) AS '60m',
-            SUM(CASE WHEN timestamp >= DATEADD(HOUR, DATEDIFF(HOUR, 0, GETDATE()) - 1, 0) AND timestamp < DATEADD(HOUR, DATEDIFF(HOUR, 0, GETDATE()), 0) THEN volume ELSE 0 END) AS '60m_before'
-        FROM {coin}usdt
-        WHERE timestamp >= CAST(GETDATE() AS DATE)
-        GROUP BY price
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300 + 300) THEN volume ELSE 0 END) AS volume_5min,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300 - 300) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/300)*300) THEN volume ELSE 0 END) AS volume_5min_before,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900 + 900) THEN volume ELSE 0 END) AS volume_15min,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900 - 900) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/900)*900) THEN volume ELSE 0 END) AS volume_15min_before,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600 + 3600) THEN volume ELSE 0 END) AS volume_60min,
+            SUM(CASE WHEN timestamp >= FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600 - 3600) AND timestamp < FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(NOW())/3600)*3600) THEN volume ELSE 0 END) AS volume_60min_before
+    FROM {coin}usdt
+    WHERE timestamp >= CURDATE() + INTERVAL 1 SECOND
+    GROUP BY priceq
     """
 
     connection = get_db_connection()
