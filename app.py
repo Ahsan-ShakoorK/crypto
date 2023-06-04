@@ -13,6 +13,7 @@ def get_db_connection():
         pwd='Pak@1947'
     )
     return connection
+
 def fetch_data(coin):
     query = f"""
         SELECT ROUND(price, 6) AS price,
