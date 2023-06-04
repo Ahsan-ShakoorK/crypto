@@ -24,9 +24,11 @@ def fetch_data(coin):
             SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600 + 3600, '19700101') THEN volume ELSE 0 END) AS volume_60min,
             SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600 - 3600, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600, '19700101') THEN volume ELSE 0 END) AS volume_60min_before
         FROM {coin}usdt
-        WHERE timestamp >= DATEADD(SECOND, 1, CAST(GETDATE() AS DATE))
+        WHERE timestamp >= GETDATE()
         GROUP BY price
     """
+    ...
+
 
 
     connection = get_db_connection()
