@@ -42,7 +42,6 @@ def fetch_trading_data(coin):
         'volume_60min': '60m',
         'volume_60min_before': '60m_b'
     })
-    df = st.write(df)
     return df
 
 def main():
@@ -58,6 +57,7 @@ def main():
 
     # Fetch trading data for the selected coin
     df = fetch_trading_data(selected_coin)
+    st.write(df)  # Display the DataFrame
     time.sleep(5)
     st.experimental_rerun()
 
