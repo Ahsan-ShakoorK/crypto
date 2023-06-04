@@ -16,14 +16,17 @@ def get_db_connection():
 def fetch_data(coin):
     query = f"""
         SELECT
+            DATEPART(HOUR, timestamp) as hour,
             price,
             SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -5, GETDATE()) THEN volume ELSE 0 END) AS past_5min_volume,
             SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -15, GETDATE()) THEN volume ELSE 0 END) AS past_15min_volume,
             SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -60, GETDATE()) THEN volume ELSE 0 END) AS past_60min_volume
         FROM {coin}usdt
         WHERE timestamp >= DATEADD(MINUTE, -60, GETDATE())
-        GROUP BY price
+        GROUP BY DATEPART(HOUR, timestamp), price
     """
+    # ...
+
 
     connection = get_db_connection()
     df = pd.read_sql_query(query, connection)
@@ -51,4 +54,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-#  v??
