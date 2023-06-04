@@ -21,7 +21,7 @@ def fetch_data(coin):
             SUM(CASE WHEN timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) - 5, 0) THEN volume ELSE 0 END) AS past_5min_volume
         FROM {coin}usdt
         WHERE timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) - 15, 0)
-        GROUP BY price, timestamp
+        GROUP BY price
     """
 
     connection = get_db_connection()
