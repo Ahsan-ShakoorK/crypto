@@ -24,9 +24,8 @@ def fetch_data(coin):
             SUM(CASE WHEN timestamp >= DATEADD(HOUR, DATEDIFF(HOUR, 0, GETDATE()), 0) AND timestamp < DATEADD(HOUR, DATEDIFF(HOUR, 0, GETDATE()) + 1, 0) THEN volume ELSE 0 END) AS volume_60min,
             SUM(CASE WHEN timestamp >= DATEADD(HOUR, DATEDIFF(HOUR, 0, GETDATE()) - 1, 0) AND timestamp < DATEADD(HOUR, DATEDIFF(HOUR, 0, GETDATE()), 0) THEN volume ELSE 0 END) AS volume_60min_before
         FROM {coin}usdt
-        WHERE timestamp >= CAST(GETDATE() AS DATE)
-         GROUP BY price
-
+        WHERE timestamp >= CAST(GETDATE() AS DATE) AND timestamp < DATEADD(DAY, 1, CAST(GETDATE() AS DATE))
+        GROUP BY ROUND(price, 6)
     """
 
     connection = get_db_connection()
@@ -34,6 +33,7 @@ def fetch_data(coin):
     connection.close()
 
     return df
+
 
 def fetch_daily_data(coin, selected_date):
     query = f"""
