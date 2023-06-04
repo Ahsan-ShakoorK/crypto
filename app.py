@@ -15,24 +15,24 @@ def get_db_connection():
 
 def fetch_data(coin):
     query = f"""
-        SELECT
-            DATEPART(HOUR, timestamp) as hour,
-            price,
-            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -5, GETDATE()) THEN volume ELSE 0 END) AS past_5min_volume,
-            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -15, GETDATE()) THEN volume ELSE 0 END) AS past_15min_volume,
-            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -60, GETDATE()) THEN volume ELSE 0 END) AS past_60min_volume
+        SELECT ROUND(price, 6) AS price,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300 + 300, '19700101') THEN volume ELSE 0 END) AS volume_5min,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300 - 300, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300, '19700101') THEN volume ELSE 0 END) AS volume_5min_before,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900 + 900, '19700101') THEN volume ELSE 0 END) AS volume_15min,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900 - 900, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900, '19700101') THEN volume ELSE 0 END) AS volume_15min_before,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600 + 3600, '19700101') THEN volume ELSE 0 END) AS volume_60min,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600 - 3600, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600, '19700101') THEN volume ELSE 0 END) AS volume_60min_before
         FROM {coin}usdt
-        WHERE timestamp >= DATEADD(MINUTE, -60, GETDATE())
-        GROUP BY DATEPART(HOUR, timestamp), price
+        WHERE timestamp >= CAST(CAST(GETDATE() AS DATE) AS DATETIME) + '00:00:01'
+        GROUP BY price
     """
-    # ...
-
 
     connection = get_db_connection()
     df = pd.read_sql_query(query, connection)
     connection.close()
 
     return df
+
 
 
 def main():
