@@ -102,6 +102,8 @@ def main():
 
     # Display the daily data
     st.dataframe(daily_df)
+    time.sleep(5)
+    st.experimental_rerun()
 
 if __name__ == '__main__':
     main()
