@@ -15,9 +15,12 @@ def get_db_connection():
 
 def fetch_data(coin):
     query = f"""
-        SELECT price, SUM(volume) AS total_volume
+        SELECT price,
+            SUM(volume) AS total_volume,
+            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) - 15, 0) THEN volume ELSE 0 END) AS past_15min_volume,
+            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) - 5, 0) THEN volume ELSE 0 END) AS past_5min_volume
         FROM {coin}usdt
-        WHERE timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) - 5, 0)
+        WHERE timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()) - 15, 0)
         GROUP BY price
     """
 
