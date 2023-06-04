@@ -35,17 +35,24 @@ def fetch_data(coin):
     return df
 def fetch_daily_data(coin, selected_date):
     query = f"""
-        SELECT price,
-            SUM(CASE WHEN CAST(timestamp AS TIME) BETWEEN '00:00:00' AND '03:59:59' THEN volume ELSE 0 END) AS '4h',
-            SUM(CASE WHEN CAST(timestamp AS TIME) BETWEEN '04:00:00' AND '07:59:59' THEN volume ELSE 0 END) AS '8h',
-            SUM(CASE WHEN CAST(timestamp AS TIME) BETWEEN '08:00:00' AND '11:59:59' THEN volume ELSE 0 END) AS '12h',
-            SUM(CASE WHEN CAST(timestamp AS TIME) BETWEEN '12:00:00' AND '15:59:59' THEN volume ELSE 0 END) AS '16h',
-            SUM(CASE WHEN CAST(timestamp AS TIME) BETWEEN '16:00:00' AND '19:59:59' THEN volume ELSE 0 END) AS '20h',
-            SUM(CASE WHEN CAST(timestamp AS TIME) BETWEEN '20:00:00' AND '23:59:59' THEN volume ELSE 0 END) AS '24h'
+        SELECT price, 
+    """
+
+    for hour in range(24):
+        start_time = f"{hour:02d}:00:00"
+        end_time = f"{hour:02d}:59:59"
+        column_name = f"{hour+1}h"
+        query += f"SUM(CASE WHEN CAST(timestamp AS TIME) BETWEEN '{start_time}' AND '{end_time}' THEN volume ELSE 0 END) AS '{column_name}', "
+
+    query = query.rstrip(", ")  # Remove the trailing comma and space
+    query += f"""
         FROM {coin}usdt
         WHERE CAST(timestamp AS DATE) = '{selected_date}'
         GROUP BY price
     """
+
+    return query
+
 
     connection = get_db_connection()
     df = pd.read_sql_query(query, connection)
