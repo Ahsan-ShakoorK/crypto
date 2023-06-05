@@ -2,6 +2,7 @@ import streamlit as st
 import pymssql
 import pandas as pd
 import time
+import datetime
 
 # Establish connection to SQL Server
 connection = pymssql.connect(
