@@ -9,7 +9,7 @@ connection = pymssql.connect(
     user='dbahsantrade',
     password='Pak@1947',
     database='db_ran'
-)
+) 
 
 def fetch_trading_data(coin):
     query = f"""
