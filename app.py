@@ -49,6 +49,26 @@ def fetch_trading_data(coin):
     })
     return df
 
+def fetch_daily_data(coin, selected_date):
+    query = f"""
+        SELECT ROUND(price, 6) AS price,
+            {', '.join([f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {hour} THEN volume ELSE 0 END) AS volume_{hour}hour" for hour in range(24)])}
+        FROM {coin}usdt
+        WHERE CONVERT(DATE, timestamp) = '{selected_date}'
+        GROUP BY price
+    """
+
+    with connection.cursor(as_dict=True) as cursor:
+        cursor.execute(query)
+        data = cursor.fetchall()
+
+    df = pd.DataFrame(data)
+
+    # Filter out rows where all volume columns are 0
+    volume_columns = [f'volume_{hour}hour' for hour in range(24)]
+    df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
+    return df
+
 def main():
     # Set Streamlit app title and layout
     st.title("Cryptocurrency Market Trading Data")
@@ -60,9 +80,20 @@ def main():
     # Create a selectbox for coin selection
     selected_coin = st.selectbox("Select a coin", coins)
 
-    # Fetch trading data for the selected coin
-    df = fetch_trading_data(selected_coin)
-    st.write(df)  # Display the DataFrame
+    # Fetch and display trading data for the selected coin
+    df_trading = fetch_trading_data(selected_coin)
+    st.subheader("Latest Trading Data")
+    st.write(df_trading)
+
+    # Create a date input for the past 7 days
+    seven_days_ago = datetime.now() - timedelta(days=7)
+    selected_date = st.date_input('Select a date', seven_days_ago)
+    selected_date = pd.to_datetime(selected_date).strftime('%Y-%m-%d')
+
+    # Fetch and display daily data for the selected coin and date
+    df_daily = fetch_daily_data(selected_coin, selected_date)
+    st.subheader("Daily Chart Data")
+    st.write(df_daily)
 
     current_time = pd.to_datetime('now').strftime("%Y-%m-%d %H:%M:%S")
     st.write(f"Current Time: {current_time}")
