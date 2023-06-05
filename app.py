@@ -52,7 +52,7 @@ def fetch_trading_data(coin):
 def fetch_daily_data(coin, selected_date):
     query = f"""
         SELECT ROUND(price, 6) AS price,
-            {', '.join([f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {hour} THEN volume ELSE 0 END) AS volume_{hour}hour" for hour in range(24)])}
+            {', '.join([f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {hour} THEN volume ELSE 0 END) AS {hour}h" for hour in range(24)])}
         FROM {coin}usdt
         WHERE CONVERT(DATE, timestamp) = '{selected_date}'
         GROUP BY price
@@ -65,7 +65,7 @@ def fetch_daily_data(coin, selected_date):
     df = pd.DataFrame(data)
 
     # Get the intersection of existing DataFrame columns and expected volume_columns
-    volume_columns = [col for col in df.columns if 'v_' in col]
+    volume_columns = [col for col in df.columns if 'volume_' in col]
 
     if volume_columns:
         # Filter out rows where all volume columns are 0
