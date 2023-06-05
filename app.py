@@ -52,7 +52,7 @@ def fetch_trading_data(coin):
 def fetch_daily_data(coin, selected_date):
     query = f"""
         SELECT ROUND(price, 6) AS price,
-            {', '.join([f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {hour} THEN volume ELSE 0 END) AS {hour}h" for hour in range(24)])}
+            {', '.join([f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {hour} THEN volume ELSE 0 END) AS volume_{hour}hour" for hour in range(24)])}
         FROM {coin}usdt
         WHERE CONVERT(DATE, timestamp) = '{selected_date}'
         GROUP BY price
