@@ -13,7 +13,7 @@ connection = pymssql.connect(
 )
 
 def fetch_trading_data(coin):
-    current_time = datetime.datetime.now()
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     query = f"""
         SELECT ROUND(price, 6) AS price,
             SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -5, '{current_time}') AND timestamp < '{current_time}' THEN volume ELSE 0 END) AS volume_5min,
@@ -26,6 +26,9 @@ def fetch_trading_data(coin):
         WHERE timestamp >= CAST(GETDATE() AS DATE)
         GROUP BY price
     """
+
+    # Rest of the code...
+
 
     # Rest of the code...
 
