@@ -11,21 +11,19 @@ connection = pymssql.connect(
     database='db_ran'
 )
 
-# Function to fetch trading data from SQL Server for a specific coin
 def fetch_trading_data(coin):
     query = f"""
-    SELECT ROUND(price, 6) AS price,
-        SUM(CASE WHEN timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE())/5*5, 0) AND timestamp < DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE())/5*5 + 5, 0) THEN volume ELSE 0 END) AS volume_5min,
-        SUM(CASE WHEN timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE())/5*5 - 5, 0) AND timestamp < DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE())/5*5, 0) THEN volume ELSE 0 END) AS volume_5min_before,
-        SUM(CASE WHEN timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE())/15*15, 0) AND timestamp < DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE())/15*15 + 15, 0) THEN volume ELSE 0 END) AS volume_15min,
-        SUM(CASE WHEN timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE())/15*15 - 15, 0) AND timestamp < DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE())/15*15, 0) THEN volume ELSE 0 END) AS volume_15min_before,
-        SUM(CASE WHEN timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE())/60*60, 0) AND timestamp < DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE())/60*60 + 60, 0) THEN volume ELSE 0 END) AS volume_60min,
-        SUM(CASE WHEN timestamp >= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE())/60*60 - 60, 0) AND timestamp < DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE())/60*60, 0) THEN volume ELSE 0 END) AS volume_60min_before
-    FROM {coin}usdt
-    WHERE timestamp >= CAST(CAST(GETDATE() AS DATE) AS DATETIME)
-    GROUP BY price
-"""
-
+        SELECT ROUND(price, 6) AS price,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300 + 300, '19700101') THEN volume ELSE 0 END) AS volume_5min,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300 - 300, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300, '19700101') THEN volume ELSE 0 END) AS volume_5min_before,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900 + 900, '19700101') THEN volume ELSE 0 END) AS volume_15min,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900 - 900, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900, '19700101') THEN volume ELSE 0 END) AS volume_15min_before,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600 + 3600, '19700101') THEN volume ELSE 0 END) AS volume_60min,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600 - 3600, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600, '19700101') THEN volume ELSE 0 END) AS volume_60min_before
+        FROM {coin}usdt
+        WHERE timestamp >= CAST(GETDATE() AS DATE)
+        GROUP BY price
+    """
 
     with connection.cursor(as_dict=True) as cursor:
         cursor.execute(query)
