@@ -1,7 +1,6 @@
 import streamlit as st
 import pymssql
 import pandas as pd
-import datetime
 import time
 
 # Establish connection to SQL Server
@@ -13,16 +12,14 @@ connection = pymssql.connect(
 )
 
 def fetch_trading_data(coin):
-    current_time = datetime.datetime.now()
-
     query = f"""
         SELECT ROUND(price, 6) AS price,
-            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -5, '{current_time}') AND timestamp < '{current_time}' THEN volume ELSE 0 END) AS volume_5min,
-            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -10, '{current_time}') AND timestamp < DATEADD(MINUTE, -5, '{current_time}') THEN volume ELSE 0 END) AS volume_5min_before,
-            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -15, '{current_time}') AND timestamp < '{current_time}' THEN volume ELSE 0 END) AS volume_15min,
-            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -30, '{current_time}') AND timestamp < DATEADD(MINUTE, -15, '{current_time}') THEN volume ELSE 0 END) AS volume_15min_before,
-            SUM(CASE WHEN timestamp >= DATEADD(HOUR, -1, '{current_time}') AND timestamp < '{current_time}' THEN volume ELSE 0 END) AS volume_60min,
-            SUM(CASE WHEN timestamp >= DATEADD(HOUR, -2, '{current_time}') AND timestamp < DATEADD(HOUR, -1, '{current_time}') THEN volume ELSE 0 END) AS volume_60min_before
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300 + 300, '19700101') THEN volume ELSE 0 END) AS volume_5min,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300 - 300, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300, '19700101') THEN volume ELSE 0 END) AS volume_5min_before,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900 + 900, '19700101') THEN volume ELSE 0 END) AS volume_15min,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900 - 900, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900, '19700101') THEN volume ELSE 0 END) AS volume_15min_before,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600 + 3600, '19700101') THEN volume ELSE 0 END) AS volume_60min,
+            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600 - 3600, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600, '19700101') THEN volume ELSE 0 END) AS volume_60min_before
         FROM {coin}usdt
         WHERE timestamp >= CAST(GETDATE() AS DATE)
         GROUP BY price
@@ -36,7 +33,14 @@ def fetch_trading_data(coin):
     df = pd.DataFrame(data)
     volume_columns = ['volume_5min', 'volume_5min_before', 'volume_15min', 'volume_15min_before', 'volume_60min', 'volume_60min_before']
     df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
-
+    df = df.rename(columns={
+        'volume_5min': '5m',
+        'volume_5min_before': '5m_b',
+        'volume_15min': '15m',
+        'volume_15min_before': '15m_b',
+        'volume_60min': '60m',
+        'volume_60min_before': '60m_b'
+    })
     return df
 
 def main():
@@ -53,7 +57,10 @@ def main():
     # Fetch trading data for the selected coin
     df = fetch_trading_data(selected_coin)
     st.write(df)  # Display the DataFrame
-    st.write('Current time:', datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')) # Display the current time
+
+    current_time = pd.to_datetime('now').strftime("%Y-%m-%d %H:%M:%S")
+    st.write(f"Current Time: {current_time}")
+
     time.sleep(5)
     st.experimental_rerun()
 
