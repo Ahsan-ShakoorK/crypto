@@ -14,14 +14,15 @@ connection = pymssql.connect(
 
 def fetch_trading_data(coin):
     current_time = datetime.datetime.now()
+
     query = f"""
         SELECT ROUND(price, 6) AS price,
-            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300 + 300, '19700101') THEN volume ELSE 0 END) AS "volume_{current_time.strftime('%H:%M:%S')}",
-            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300 - 300, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/300)*300, '19700101') THEN volume ELSE 0 END) AS "volume_{(current_time - datetime.timedelta(minutes=5)).strftime('%H:%M:%S')}",
-            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900 + 900, '19700101') THEN volume ELSE 0 END) AS "volume_{current_time.strftime('%H:%M:%S')}",
-            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900 - 900, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/900)*900, '19700101') THEN volume ELSE 0 END) AS "volume_{(current_time - datetime.timedelta(minutes=15)).strftime('%H:%M:%S')}",
-            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600 + 3600, '19700101') THEN volume ELSE 0 END) AS "volume_{current_time.strftime('%H:%M:%S')}",
-            SUM(CASE WHEN timestamp >= DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600 - 3600, '19700101') AND timestamp < DATEADD(SECOND, FLOOR(DATEDIFF(SECOND, '19700101', GETDATE())/3600)*3600, '19700101') THEN volume ELSE 0 END) AS "volume_{(current_time - datetime.timedelta(hours=1)).strftime('%H:%M:%S')}"
+            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -5, '{current_time}') AND timestamp < '{current_time}' THEN volume ELSE 0 END) AS volume_5min,
+            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -10, '{current_time}') AND timestamp < DATEADD(MINUTE, -5, '{current_time}') THEN volume ELSE 0 END) AS volume_5min_before,
+            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -15, '{current_time}') AND timestamp < '{current_time}' THEN volume ELSE 0 END) AS volume_15min,
+            SUM(CASE WHEN timestamp >= DATEADD(MINUTE, -30, '{current_time}') AND timestamp < DATEADD(MINUTE, -15, '{current_time}') THEN volume ELSE 0 END) AS volume_15min_before,
+            SUM(CASE WHEN timestamp >= DATEADD(HOUR, -1, '{current_time}') AND timestamp < '{current_time}' THEN volume ELSE 0 END) AS volume_60min,
+            SUM(CASE WHEN timestamp >= DATEADD(HOUR, -2, '{current_time}') AND timestamp < DATEADD(HOUR, -1, '{current_time}') THEN volume ELSE 0 END) AS volume_60min_before
         FROM {coin}usdt
         WHERE timestamp >= CAST(GETDATE() AS DATE)
         GROUP BY price
@@ -33,7 +34,7 @@ def fetch_trading_data(coin):
 
     # Filter out rows where all volume columns are 0
     df = pd.DataFrame(data)
-    volume_columns = [f"volume_{current_time.strftime('%H:%M:%S')}", f"volume_{(current_time - datetime.timedelta(minutes=5)).strftime('%H:%M:%S')}", f"volume_{current_time.strftime('%H:%M:%S')}", f"volume_{(current_time - datetime.timedelta(minutes=15)).strftime('%H:%M:%S')}", f"volume_{current_time.strftime('%H:%M:%S')}", f"volume_{(current_time - datetime.timedelta(hours=1)).strftime('%H:%M:%S')}"]
+    volume_columns = ['volume_5min', 'volume_5min_before', 'volume_15min', 'volume_15min_before', 'volume_60min', 'volume_60min_before']
     df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
 
     return df
@@ -52,7 +53,7 @@ def main():
     # Fetch trading data for the selected coin
     df = fetch_trading_data(selected_coin)
     st.write(df)  # Display the DataFrame
-    st.write('Current time: ', datetime.datetime.now().strftime('%H:%M:%S')) # Display the current time
+    st.write('Current time:', datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')) # Display the current time
     time.sleep(5)
     st.experimental_rerun()
 
