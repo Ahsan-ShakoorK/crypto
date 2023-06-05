@@ -81,12 +81,8 @@ def fetch_daily_data(coin, selected_date, timeframe):
     df.columns = ['Price'] + [str(i) for i in range(len(interval_list))]
 
     return df
-def color_greater_than(s, amount):
-    """
-    Function to color cells that contain values greater than `amount`
-    """
-    is_high = pd.to_numeric(s, errors='coerce') > amount
-    return ['background-color: yellow' if v else '' for v in is_high]
+
+
 
 def main():
     # Set Streamlit app title and layout
@@ -95,6 +91,7 @@ def main():
 
     # Get the list of coins
     coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil", "cfx", "adx", "chz", "bel", "alpaca", "elf", "epx", "pros", "t", "dar", "agix", "mob", "id", "trx", "key", "tru", "amb", "magic", "lina", "lever"]
+
 
     # Create a selectbox for coin selection
     selected_coin = st.selectbox("Select a coin", coins)
@@ -116,9 +113,7 @@ def main():
     # Fetch and display daily data for the selected coin and date
     df_daily = fetch_daily_data(selected_coin, selected_date, selected_timeframe)
     st.subheader("Daily Chart Data")
-    amount = st.number_input('Highlight values greater than:')
-    df_daily_styled = df_daily.style.applymap(lambda x: color_greater_than(x, amount))
-    st.markdown(df_daily_styled.to_html(escape=False), unsafe_allow_html=True)
+    st.write(df_daily)
 
     current_time = pd.to_datetime('now').strftime("%Y-%m-%d %H:%M:%S")
     st.write(f"Current Time: {current_time}")
