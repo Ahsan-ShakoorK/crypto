@@ -64,9 +64,12 @@ def fetch_daily_data(coin, selected_date):
 
     df = pd.DataFrame(data)
 
-    # Filter out rows where all volume columns are 0
-    volume_columns = [f'volume_{hour}hour' for hour in range(24)]
-    df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
+    # Get the intersection of existing DataFrame columns and expected volume_columns
+    volume_columns = [col for col in df.columns if 'volume_' in col]
+
+    if volume_columns:
+        # Filter out rows where all volume columns are 0
+        df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
     return df
 
 def main():
