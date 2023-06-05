@@ -48,11 +48,17 @@ def fetch_trading_data(coin):
         'volume_60min_before': '60m_b'
     })
     return df
+def fetch_daily_data(coin, selected_date, timeframe):
+    intervals = {
+        '5min': list(range(0, 24*60, 5)),
+        '15min': list(range(0, 24*60, 15)),
+        '1hour': list(range(24))
+    }
+    interval_list = intervals[timeframe]
 
-def fetch_daily_data(coin, selected_date):
     query = f"""
         SELECT ROUND(price, 6) AS price,
-            {', '.join([f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {hour} THEN volume ELSE 0 END) AS volume_{hour}hour" for hour in range(24)])}
+            {', '.join([f"SUM(CASE WHEN DATEPART(MINUTE, timestamp) = {interval} THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
         FROM {coin}usdt
         WHERE CONVERT(DATE, timestamp) = '{selected_date}'
         GROUP BY price
@@ -70,13 +76,11 @@ def fetch_daily_data(coin, selected_date):
     if volume_columns:
         # Filter out rows where all volume columns are 0
         df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
-        
+
     # Rename the columns for better display
-    df.columns = ['Price'] + [str(i) for i in range(24)]
+    df.columns = ['Price'] + [str(i) for i in range(len(interval_list))]
 
     return df
-
-
 def main():
     # Set Streamlit app title and layout
     st.title("Cryptocurrency Market Trading Data")
@@ -98,8 +102,12 @@ def main():
     selected_date = st.date_input('Select a date', seven_days_ago)
     selected_date = pd.to_datetime(selected_date).strftime('%Y-%m-%d')
 
+    # Add a selection for timeframes
+    timeframes = ["5min", "15min", "1hour"]
+    selected_timeframe = st.selectbox("Select a timeframe", timeframes)
+
     # Fetch and display daily data for the selected coin and date
-    df_daily = fetch_daily_data(selected_coin, selected_date)
+    df_daily = fetch_daily_data(selected_coin, selected_date, selected_timeframe)
     st.subheader("Daily Chart Data")
     st.write(df_daily)
 
