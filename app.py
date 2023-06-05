@@ -70,7 +70,12 @@ def fetch_daily_data(coin, selected_date):
     if volume_columns:
         # Filter out rows where all volume columns are 0
         df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
+        
+    # Rename the columns for better display
+    df.columns = ['Price'] + [str(i) for i in range(24)]
+
     return df
+
 
 def main():
     # Set Streamlit app title and layout
