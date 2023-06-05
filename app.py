@@ -57,6 +57,10 @@ def main():
     # Fetch trading data for the selected coin
     df = fetch_trading_data(selected_coin)
     st.write(df)  # Display the DataFrame
+
+    current_time = pd.to_datetime('now').strftime("%Y-%m-%d %H:%M:%S")
+    st.write(f"Current Time: {current_time}")
+
     time.sleep(5)
     st.experimental_rerun()
 
