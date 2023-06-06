@@ -151,7 +151,7 @@ def main():
     selected_timeframe = st.selectbox("Select a timeframe", timeframes)
 
     # Fetch and display daily data for the selected coin and date
-    highlight_enabled = st.checkbox("Enable highlighting for values greater than a specified number")
+    highlight_enabled = st.checkbox("Highlght > %")
     if highlight_enabled:
         highlight_value = st.number_input("Enter the value for highlighting", min_value=0)
         df_daily = fetch_daily_data(selected_coin, selected_date, selected_timeframe, highlight_value)
