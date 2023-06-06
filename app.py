@@ -50,14 +50,16 @@ def fetch_trading_data(coin):
         'volume_60min_before': '60m_b'
     })
     
-    # Apply styling to lock the first column
-    df_styled = df.style.hide_index()
-    df_styled = df_styled.set_table_styles([
-        dict(selector="th:first-child", props=[("position", "sticky"), ("left", "0")]),
-        dict(selector="td:first-child", props=[("position", "sticky"), ("left", "0")])
+    # Set the price column as the index
+    df.set_index('price', inplace=True)
+
+    # Apply styling to lock the price column
+    df_styled = df.style.set_table_styles([
+        {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]}
     ])
 
     return df_styled
+
 def fetch_daily_data(coin, selected_date, timeframe):
     intervals = {
         '5min': list(range(0, 24*60, 5)),
