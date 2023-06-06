@@ -62,7 +62,7 @@ def fetch_trading_data(coin):
 
     return df_styled
 
-def fetch_daily_data(coin, selected_date, timeframe):
+def fetch_daily_data(coin, selected_date, timeframe,highlight_value=None):
     intervals = {
         '5min': list(range(0, 24*60, 5)),
         '15min': list(range(0, 24*60, 15)),
@@ -107,11 +107,16 @@ def fetch_daily_data(coin, selected_date, timeframe):
     df.set_index('price', inplace=True)
 
     # Apply styling to lock the price column
+    # Apply styling to lock the price column
     df_styled = df.style.set_table_styles([
         {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
         {'selector': 'td:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
         {'selector': 'td', 'props': [('text-align', 'right')]},
     ])
+
+    # If the user has specified a highlight_value, apply conditional formatting
+    if highlight_value is not None:
+        df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if x > highlight_value else '', subset=column_names)
 
     return df_styled
 
@@ -124,7 +129,6 @@ def main():
     # Get the list of coins
     coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil", "cfx", "adx", "chz", "bel", "alpaca", "elf", "epx", "pros", "t", "dar", "agix", "mob", "id", "trx", "key", "tru", "amb", "magic", "lina", "lever"]
 
-
     # Create a selectbox for coin selection
     selected_coin = st.selectbox("Select a coin", coins)
 
@@ -133,17 +137,21 @@ def main():
     st.subheader("Latest Trading Data")
     st.write(df_trading)
 
-
     selected_date = st.date_input('Select a date', datetime.now())
     selected_date = pd.to_datetime(selected_date).strftime('%Y-%m-%d')
-
 
     # Add a selection for timeframes
     timeframes = ["5min", "15min", "1hour"]
     selected_timeframe = st.selectbox("Select a timeframe", timeframes)
 
     # Fetch and display daily data for the selected coin and date
-    df_daily = fetch_daily_data(selected_coin, selected_date, selected_timeframe)
+    highlight_enabled = st.checkbox("Enable highlighting for values greater than a specified number")
+    if highlight_enabled:
+        highlight_value = st.number_input("Enter the value for highlighting", min_value=0)
+        df_daily = fetch_daily_data(selected_coin, selected_date, selected_timeframe, highlight_value)
+    else:
+        df_daily = fetch_daily_data(selected_coin, selected_date, selected_timeframe)
+
     st.subheader("Daily Chart Data")
     st.write(df_daily)
 
