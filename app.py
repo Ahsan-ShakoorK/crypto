@@ -91,26 +91,38 @@ def fetch_daily_data(coin, selected_date, timeframe,highlight_value=None):
     with connection.cursor(as_dict=True) as cursor:
         cursor.execute(query)
         data = cursor.fetchall()
-
+    
     df = pd.DataFrame(data)
     df = df.apply(pd.to_numeric, errors='ignore')  # Convert all columns to numeric
     df = df.sort_values('price', ascending=False)
-
     volume_columns = [col for col in df.columns if 'volume_' in col]
-    df[volume_columns] = df[volume_columns].round(0)
 
-    df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
+    if volume_columns:
+        # Filter out rows where all volume columns are 0
+        df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
+    
+    # Rename the columns for better display
     df.columns = ['price'] + column_names
+
+    # Set the price column as the index
+    df['price'] = df['price'].apply(lambda x: f"{x:.8f}")
     df.set_index('price', inplace=True)
 
+    # Calculate percentages for volume columns based on the highlight_value
+    if highlight_value is not None:
+        for column in column_names:
+            df[column] = df[column].apply(lambda x: f"{x/highlight_value*100:.2f}%" if isinstance(x, (int, float)) else x)
+
+    # Apply styling to lock the price column
     df_styled = df.style.set_table_styles([
         {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
         {'selector': 'td:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
-        {'selector': 'td', 'props': [('text-align', 'right')]}
+        {'selector': 'td', 'props': [('text-align', 'right')]},
     ])
 
+    # If the user has specified a highlight_value, apply conditional formatting
     if highlight_value is not None:
-        df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if x > highlight_value else '', subset=column_names)
+        df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if isinstance(x, (int, float)) and x > highlight_value else '', subset=column_names)
 
     return df_styled
 
