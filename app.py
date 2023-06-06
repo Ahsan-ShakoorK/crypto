@@ -123,8 +123,8 @@ def fetch_daily_data(coin, selected_date, timeframe,highlight_value=None):
 
 def main():
     # Set Streamlit app title and layout
-    st.title("Cryptocurrency Market Trading Data")
-    st.write("Market data retrieved from SQL Server")
+    # st.title("Cryptocurrency Market Trading Data")
+    # st.write("Market data retrieved from SQL Server")
 
     # Get the list of coins
     coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil", "cfx", "adx", "chz", "bel", "alpaca", "elf", "epx", "pros", "t", "dar", "agix", "mob", "id", "trx", "key", "tru", "amb", "magic", "lina", "lever"]
