@@ -77,7 +77,7 @@ def fetch_daily_data(coin, selected_date, timeframe):
 
 
     query = f"""
-        SELECT ROUND(price, 10) AS price,
+        SELECT price,
             {', '.join([f"SUM(CASE WHEN DATEPART(MINUTE, timestamp) = {interval} THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
         FROM {coin}usdt
         WHERE CONVERT(DATE, timestamp) = '{selected_date}'
