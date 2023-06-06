@@ -19,7 +19,7 @@ def fetch_trading_data(coin):
     one_hour = now.replace(minute=0, second=0, microsecond=0)
 
     query = f"""
-        SELECT price,
+         SELECT CAST(price AS DECIMAL(18, 6)) AS price,
             SUM(CASE WHEN timestamp >= '{five_minute}' AND timestamp < '{five_minute + timedelta(minutes=5)}' THEN volume ELSE 0 END) AS volume_5min,
             SUM(CASE WHEN timestamp >= '{five_minute - timedelta(minutes=5)}' AND timestamp < '{five_minute}' THEN volume ELSE 0 END) AS volume_5min_before,
             SUM(CASE WHEN timestamp >= '{fifteen_minute}' AND timestamp < '{fifteen_minute + timedelta(minutes=15)}' THEN volume ELSE 0 END) AS volume_15min,
@@ -77,7 +77,7 @@ def fetch_daily_data(coin, selected_date, timeframe):
 
 
     query = f"""
-        SELECT price,
+         SELECT CAST(price AS DECIMAL(18, 6)) AS price,
             {', '.join([f"SUM(CASE WHEN DATEPART(MINUTE, timestamp) = {interval} THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
         FROM {coin}usdt
         WHERE CONVERT(DATE, timestamp) = '{selected_date}'
