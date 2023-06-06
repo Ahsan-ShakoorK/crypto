@@ -140,7 +140,7 @@ def main():
 
     # Fetch and display trading data for the selected coin
     df_trading = fetch_trading_data(selected_coin)
-    st.subheader("Latest Trading Data")
+    # st.subheader("Latest Trading Data")
     st.write(df_trading)
 
     selected_date = st.date_input('Select a date', datetime.now())
@@ -148,7 +148,7 @@ def main():
 
     # Add a selection for timeframes
     timeframes = ["5min", "15min", "1hour"]
-    selected_timeframe = st.selectbox("Select a timeframe", timeframes)
+    selected_timeframe = st.selectbox("Timeframe", timeframes)
 
     # Fetch and display daily data for the selected coin and date
     highlight_enabled = st.checkbox("Highlight > %")
