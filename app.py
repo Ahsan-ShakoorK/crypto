@@ -164,7 +164,7 @@ def main():
     current_time = pd.to_datetime('now').strftime("%Y-%m-%d %H:%M:%S")
     st.write(f"Current Time: {current_time}")
 
-    time.sleep(10)
+    time.sleep(3)
     st.experimental_rerun()
 
 if __name__ == '__main__':
