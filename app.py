@@ -106,7 +106,26 @@ def fetch_daily_data(coin, selected_date, timeframe):
 
     # Apply styling to lock the price column
     df_styled = df.style.set_table_styles([
-        {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]}
+        {
+            'selector': 'th:first-child',
+            'props': [
+                ('position', 'sticky'),
+                ('left', '0'),
+                ('background-color', '#f0f0f0'),
+                ('color', 'black'),
+                ('font-weight', 'bold'),
+            ]
+        },
+        {
+            'selector': 'td:first-child',
+            'props': [
+                ('position', 'sticky'),
+                ('left', '0'),
+                ('background-color', 'white'),
+                ('color', 'black'),
+                ('font-weight', 'bold'),
+            ]
+        }
     ])
 
     return df_styled
