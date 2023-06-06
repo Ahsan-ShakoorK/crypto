@@ -59,12 +59,12 @@ def fetch_daily_data(coin, selected_date, timeframe):
     }
     interval_list = intervals[timeframe]
     # Convert column numbers to time format
- 
+
     # Convert column numbers to time format
-    if timeframe == '5min':
+    if timeframe == '5min' or timeframe == '15min':
         column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
     else:
-        column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
+        column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
 
 
     query = f"""
