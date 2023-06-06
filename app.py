@@ -86,11 +86,12 @@ def fetch_daily_data(coin, selected_date, timeframe):
 
 def main():
     # Set Streamlit app title and layout
-    # st.title("Cryptocurrency Market Trading Data")
-    # st.write("Market data retrieved from SQL Server")
+    st.title("Cryptocurrency Market Trading Data")
+    st.write("Market data retrieved from SQL Server")
 
     # Get the list of coins
     coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil", "cfx", "adx", "chz", "bel", "alpaca", "elf", "epx", "pros", "t", "dar", "agix", "mob", "id", "trx", "key", "tru", "amb", "magic", "lina", "lever"]
+
 
     # Create a selectbox for coin selection
     selected_coin = st.selectbox("Select a coin", coins)
@@ -100,9 +101,10 @@ def main():
     st.subheader("Latest Trading Data")
     st.write(df_trading)
 
-    # Create a date input for the current date
+
     selected_date = st.date_input('Select a date', datetime.now())
     selected_date = pd.to_datetime(selected_date).strftime('%Y-%m-%d')
+
 
     # Add a selection for timeframes
     timeframes = ["5min", "15min", "1hour"]
@@ -110,23 +112,14 @@ def main():
 
     # Fetch and display daily data for the selected coin and date
     df_daily = fetch_daily_data(selected_coin, selected_date, selected_timeframe)
-
-    # Add an input for the user to enter a value to highlight
-    highlight_value = st.number_input('Enter a value to highlight cells', value=0, step=1)
-
-    # Define a function to highlight cells greater than the input value
-    def highlight_large(x):
-        return ['background-color: yellow' if v > highlight_value else '' for v in x]
-
     st.subheader("Daily Chart Data")
-    st.write(df_daily.style.apply(highlight_large))
+    st.write(df_daily)
 
     current_time = pd.to_datetime('now').strftime("%Y-%m-%d %H:%M:%S")
     st.write(f"Current Time: {current_time}")
 
-    time.sleep(30)
+    time.sleep(10)
     st.experimental_rerun()
-
 
 if __name__ == '__main__':
     main()
