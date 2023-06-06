@@ -64,16 +64,13 @@ def fetch_trading_data(coin):
     ])
 
     return df_styled
-
-def fetch_daily_data(coin, selected_date, timeframe,highlight_value=None):
+def fetch_daily_data(coin, selected_date, timeframe, highlight_value=None):
     intervals = {
         '5min': list(range(0, 24*60, 5)),
         '15min': list(range(0, 24*60, 15)),
         '1hour': list(range(24))
     }
     interval_list = intervals[timeframe]
-    # Convert column numbers to time format
-
     # Convert column numbers to time format
     if timeframe == '5min' or timeframe == '15min':
         column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
@@ -91,16 +88,17 @@ def fetch_daily_data(coin, selected_date, timeframe,highlight_value=None):
     with connection.cursor(as_dict=True) as cursor:
         cursor.execute(query)
         data = cursor.fetchall()
-    
+
     df = pd.DataFrame(data)
     df = df.apply(pd.to_numeric, errors='ignore')  # Convert all columns to numeric
     df = df.sort_values('price', ascending=False)
+    # Get the intersection of existing DataFrame columns and expected volume_columns
     volume_columns = [col for col in df.columns if 'volume_' in col]
 
     if volume_columns:
         # Filter out rows where all volume columns are 0
         df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
-    
+
     # Rename the columns for better display
     df.columns = ['price'] + column_names
 
@@ -108,10 +106,10 @@ def fetch_daily_data(coin, selected_date, timeframe,highlight_value=None):
     df['price'] = df['price'].apply(lambda x: f"{x:.8f}")
     df.set_index('price', inplace=True)
 
-    # Calculate percentages for volume columns based on the highlight_value
-    if highlight_value is not None:
-        for column in column_names:
-            df[column] = df[column].apply(lambda x: f"{x/highlight_value*100:.2f}%" if isinstance(x, (int, float)) else x)
+    # Create a new DataFrame for displaying percentage
+    df_percentage = df.copy()
+    for col in column_names:
+        df_percentage[col] = df_percentage[col].apply(lambda x: (x/highlight_value)*100 if highlight_value else x)
 
     # Apply styling to lock the price column
     df_styled = df.style.set_table_styles([
@@ -122,9 +120,12 @@ def fetch_daily_data(coin, selected_date, timeframe,highlight_value=None):
 
     # If the user has specified a highlight_value, apply conditional formatting
     if highlight_value is not None:
-        df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if isinstance(x, (int, float)) and x > highlight_value else '', subset=column_names)
+        df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if x > highlight_value else '', subset=column_names)
+
+    df_styled.data = df_percentage
 
     return df_styled
+
 
 def main():
     # Set Streamlit app title and layout
