@@ -100,7 +100,7 @@ def fetch_daily_data(coin, selected_date, timeframe):
         df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
 
     # Rename the columns for better display
-    df.columns = ['Price'] + column_names
+    df.columns = ['price'] + column_names
 
     # Set the price column as the index
     df['price'] = df['price'].apply(lambda x: f"{x:.6f}")
