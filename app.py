@@ -49,8 +49,15 @@ def fetch_trading_data(coin):
         'volume_60min': '60m',
         'volume_60min_before': '60m_b'
     })
-    return df
+    
+    # Apply styling to lock the first column
+    df_styled = df.style.hide_index()
+    df_styled = df_styled.set_table_styles([
+        dict(selector="th:first-child", props=[("position", "sticky"), ("left", "0")]),
+        dict(selector="td:first-child", props=[("position", "sticky"), ("left", "0")])
+    ])
 
+    return df_styled
 def fetch_daily_data(coin, selected_date, timeframe):
     intervals = {
         '5min': list(range(0, 24*60, 5)),
@@ -92,8 +99,14 @@ def fetch_daily_data(coin, selected_date, timeframe):
     # Rename the columns for better display
     df.columns = ['Price'] + column_names
 
-    return df
+    # Apply styling to lock the first column
+    df_styled = df.style.hide_index()
+    df_styled = df_styled.set_table_styles([
+        dict(selector="th:first-child", props=[("position", "sticky"), ("left", "0")]),
+        dict(selector="td:first-child", props=[("position", "sticky"), ("left", "0")])
+    ])
 
+    return df_styled
 
 
 def main():
