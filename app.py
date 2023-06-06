@@ -101,10 +101,10 @@ def main():
     st.subheader("Latest Trading Data")
     st.write(df_trading)
 
-    # Create a date input for the past 7 days
-    seven_days_ago = datetime.now() - timedelta(days=7)
-    selected_date = st.date_input('Select a date', seven_days_ago)
+
+    selected_date = st.date_input('Select a date', datetime.now())
     selected_date = pd.to_datetime(selected_date).strftime('%Y-%m-%d')
+
 
     # Add a selection for timeframes
     timeframes = ["5min", "15min", "1hour"]
@@ -118,7 +118,7 @@ def main():
     current_time = pd.to_datetime('now').strftime("%Y-%m-%d %H:%M:%S")
     st.write(f"Current Time: {current_time}")
 
-    time.sleep(5)
+    time.sleep(10)
     st.experimental_rerun()
 
 if __name__ == '__main__':
