@@ -19,7 +19,7 @@ def fetch_trading_data(coin):
     one_hour = now.replace(minute=0, second=0, microsecond=0)
 
     query = f"""
-         SELECT CAST(price AS DECIMAL(18, 6)) AS price,
+        SELECT CAST(price AS DECIMAL(18, 6)) AS price,
             SUM(CASE WHEN timestamp >= '{five_minute}' AND timestamp < '{five_minute + timedelta(minutes=5)}' THEN volume ELSE 0 END) AS volume_5min,
             SUM(CASE WHEN timestamp >= '{five_minute - timedelta(minutes=5)}' AND timestamp < '{five_minute}' THEN volume ELSE 0 END) AS volume_5min_before,
             SUM(CASE WHEN timestamp >= '{fifteen_minute}' AND timestamp < '{fifteen_minute + timedelta(minutes=15)}' THEN volume ELSE 0 END) AS volume_15min,
@@ -49,13 +49,15 @@ def fetch_trading_data(coin):
         'volume_60min': '60m',
         'volume_60min_before': '60m_b'
     })
-    
+
     # Set the price column as the index
     df.set_index('price', inplace=True)
 
     # Apply styling to lock the price column
     df_styled = df.style.set_table_styles([
-        {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]}
+        {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
+        {'selector': 'td:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
+        {'selector': 'td', 'props': [('text-align', 'right')]},
     ])
 
     return df_styled
@@ -75,9 +77,8 @@ def fetch_daily_data(coin, selected_date, timeframe):
     else:
         column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
 
-
     query = f"""
-         SELECT CAST(price AS DECIMAL(18, 6)) AS price,
+        SELECT CAST(price AS DECIMAL(18, 6)) AS price,
             {', '.join([f"SUM(CASE WHEN DATEPART(MINUTE, timestamp) = {interval} THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
         FROM {coin}usdt
         WHERE CONVERT(DATE, timestamp) = '{selected_date}'
@@ -106,29 +107,13 @@ def fetch_daily_data(coin, selected_date, timeframe):
 
     # Apply styling to lock the price column
     df_styled = df.style.set_table_styles([
-        {
-            'selector': 'th:first-child',
-            'props': [
-                ('position', 'sticky'),
-                ('left', '0'),
-                ('background-color', '#f0f0f0'),
-                ('color', 'black'),
-                ('font-weight', 'bold'),
-            ]
-        },
-        {
-            'selector': 'td:first-child',
-            'props': [
-                ('position', 'sticky'),
-                ('left', '0'),
-                ('background-color', 'white'),
-                ('color', 'black'),
-                ('font-weight', 'bold'),
-            ]
-        }
+        {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
+        {'selector': 'td:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
+        {'selector': 'td', 'props': [('text-align', 'right')]},
     ])
 
     return df_styled
+
 
 def main():
     # Set Streamlit app title and layout
