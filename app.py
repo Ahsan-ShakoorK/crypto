@@ -59,7 +59,13 @@ def fetch_daily_data(coin, selected_date, timeframe):
     }
     interval_list = intervals[timeframe]
     # Convert column numbers to time format
-    column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
+ 
+    # Convert column numbers to time format
+    if timeframe == '5min':
+        column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
+    else:
+        column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
+
 
     query = f"""
         SELECT ROUND(price, 6) AS price,
