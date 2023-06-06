@@ -51,8 +51,8 @@ def fetch_trading_data(coin):
     })
 
     # Set the price column as the index
+    df['price'] = df['price'].apply(lambda x: f"{x:.6f}")
     df.set_index('price', inplace=True)
-
     # Apply styling to lock the price column
     df_styled = df.style.set_table_styles([
         {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
