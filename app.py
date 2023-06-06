@@ -34,13 +34,19 @@ def fetch_trading_data(coin):
     with connection.cursor(as_dict=True) as cursor:
         cursor.execute(query)
         data = cursor.fetchall()
-
-    # Filter out rows where all volume columns are 0
     df = pd.DataFrame(data)
+    df_price = df['price']
+    df = df.drop('price', axis=1)
+
     df = df.apply(pd.to_numeric, errors='ignore')  # Convert all columns to numeric
+    df = df.round()  # Rounds all volume columns
+
+    df['price'] = df_price  # Add back the price column
+
     df = df.sort_values('price', ascending=False)
     volume_columns = ['volume_5min', 'volume_5min_before', 'volume_15min', 'volume_15min_before', 'volume_60min', 'volume_60min_before']
     df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
+
     df = df.rename(columns={
         'volume_5min': '5m',
         'volume_5min_before': '5m_b',
@@ -50,10 +56,9 @@ def fetch_trading_data(coin):
         'volume_60min_before': '60m_b'
     })
 
-    # Set the price column as the index
     df['price'] = df['price'].apply(lambda x: f"{x:.8f}")
     df.set_index('price', inplace=True)
-    # Apply styling to lock the price column
+
     df_styled = df.style.set_table_styles([
         {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
         {'selector': 'td:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
@@ -90,31 +95,32 @@ def fetch_daily_data(coin, selected_date, timeframe,highlight_value=None):
         data = cursor.fetchall()
 
     df = pd.DataFrame(data)
+
+    df_price = df['price']
+    df = df.drop('price', axis=1)
+
     df = df.apply(pd.to_numeric, errors='ignore')  # Convert all columns to numeric
+    df = df.round()  # Rounds all volume columns
+
+    df['price'] = df_price  # Add back the price column
+
     df = df.sort_values('price', ascending=False)
-    # Get the intersection of existing DataFrame columns and expected volume_columns
     volume_columns = [col for col in df.columns if 'volume_' in col]
 
     if volume_columns:
-        # Filter out rows where all volume columns are 0
         df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
 
-    # Rename the columns for better display
     df.columns = ['price'] + column_names
 
-    # Set the price column as the index
     df['price'] = df['price'].apply(lambda x: f"{x:.8f}")
     df.set_index('price', inplace=True)
 
-    # Apply styling to lock the price column
-    # Apply styling to lock the price column
     df_styled = df.style.set_table_styles([
         {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
         {'selector': 'td:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
         {'selector': 'td', 'props': [('text-align', 'right')]},
     ])
 
-    # If the user has specified a highlight_value, apply conditional formatting
     if highlight_value is not None:
         df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if x > highlight_value else '', subset=column_names)
 
