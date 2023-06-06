@@ -37,6 +37,8 @@ def fetch_trading_data(coin):
 
     # Filter out rows where all volume columns are 0
     df = pd.DataFrame(data)
+    df = df.apply(pd.to_numeric, errors='ignore')  # Convert all columns to numeric
+    df = df.sort_values('price', ascending=False)
     volume_columns = ['volume_5min', 'volume_5min_before', 'volume_15min', 'volume_15min_before', 'volume_60min', 'volume_60min_before']
     df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
     df = df.rename(columns={
@@ -48,6 +50,7 @@ def fetch_trading_data(coin):
         'volume_60min_before': '60m_b'
     })
     return df
+
 def fetch_daily_data(coin, selected_date, timeframe):
     intervals = {
         '5min': list(range(0, 24*60, 5)),
@@ -69,7 +72,8 @@ def fetch_daily_data(coin, selected_date, timeframe):
         data = cursor.fetchall()
 
     df = pd.DataFrame(data)
-
+    df = df.apply(pd.to_numeric, errors='ignore')  # Convert all columns to numeric
+    df = df.sort_values('price', ascending=False)
     # Get the intersection of existing DataFrame columns and expected volume_columns
     volume_columns = [col for col in df.columns if 'volume_' in col]
 
