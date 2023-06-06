@@ -58,6 +58,8 @@ def fetch_daily_data(coin, selected_date, timeframe):
         '1hour': list(range(24))
     }
     interval_list = intervals[timeframe]
+    # Convert column numbers to time format
+    column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
 
     query = f"""
         SELECT ROUND(price, 6) AS price,
@@ -82,7 +84,7 @@ def fetch_daily_data(coin, selected_date, timeframe):
         df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
 
     # Rename the columns for better display
-    df.columns = ['Price'] + [str(i) for i in range(len(interval_list))]
+    df.columns = ['Price'] + column_names
 
     return df
 
