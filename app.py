@@ -99,17 +99,17 @@ def fetch_daily_data(coin, selected_date, timeframe):
         df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
 
     # Rename the columns for better display
-    df.columns = ['Price'] + column_names
+     df.columns = ['Price'] + column_names
 
-    # Apply styling to lock the first column
-    df_styled = df.style.hide_index()
-    df_styled = df_styled.set_table_styles([
-        dict(selector="th:first-child", props=[("position", "sticky"), ("left", "0")]),
-        dict(selector="td:first-child", props=[("position", "sticky"), ("left", "0")])
+    # Set the price column as the index
+    df.set_index('Price', inplace=True)
+
+    # Apply styling to lock the price column
+    df_styled = df.style.set_table_styles([
+        {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]}
     ])
 
     return df_styled
-
 
 def main():
     # Set Streamlit app title and layout
