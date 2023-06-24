@@ -3,6 +3,8 @@ import pymssql
 import pandas as pd
 import time
 from datetime import datetime, timedelta
+import io
+
 
 # Establish connection to SQL Server
 connection = pymssql.connect(
@@ -127,6 +129,13 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
 # # Show percentages based on value 100
 # percentage_df = fetch_daily_data_combined('btc', '2023-06-25', '5min', value=100, mode='percentage')
 
+def to_excel_bytes(df):
+    output = io.BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df.to_excel(writer, index=True, sheet_name='Sheet1')
+    writer.save()
+    output.seek(0)
+    return output.getvalue()
 
 def main():
     # Set Streamlit app title and layout
@@ -150,6 +159,18 @@ def main():
     # Add a selection for timeframes
     timeframes = ["5min", "15min", "1hour"]
     selected_timeframe = st.selectbox("Timeframe", timeframes)
+    df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, mode='highlight')
+
+    # ... rest of your code ...
+
+    # Download button for Excel
+    excel_bytes = to_excel_bytes(df_daily.data)  # use .data to get the underlying DataFrame
+    st.download_button(
+        label="Download Daily Chart Data",
+        data=excel_bytes,
+        file_name=f"daily_chart_data_{selected_coin}_{selected_date}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
     # Fetch and display daily data for the selected coin and date
     highlight_enabled = st.checkbox("Highlight > ")
