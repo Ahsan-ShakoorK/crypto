@@ -67,6 +67,8 @@ def fetch_trading_data(coin):
     ])
 
     return df_styled
+import pandas as pd
+from datetime import datetime
 
 def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='highlight'):
     intervals = {
@@ -80,7 +82,6 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
         column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
     else:
         column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
-
 
     current_time = datetime.now()
     is_today = selected_date == current_time.strftime('%Y-%m-%d')
@@ -100,9 +101,6 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
     with connection.cursor(as_dict=True) as cursor:
         cursor.execute(query)
         data = cursor.fetchall()
-
-    # Rest of your code
-
 
     df = pd.DataFrame(data)
     df = df.apply(pd.to_numeric, errors='ignore')
