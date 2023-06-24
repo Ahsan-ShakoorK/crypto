@@ -139,6 +139,7 @@ def to_excel_bytes(df):
     return output.getvalue()
 
 
+
 def main():
     # Set Streamlit app title and layout
     # st.title("Cryptocurrency Market Trading Data")
