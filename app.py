@@ -159,41 +159,30 @@ def main():
     # Add a selection for timeframes
     timeframes = ["5min", "15min", "1hour"]
     selected_timeframe = st.selectbox("Timeframe", timeframes)
-
-    # Fetch daily data
-    df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, mode='highlight')
-
-    # Highlight values greater than a certain threshold
+    
+    # Fetch and display daily data for the selected coin and date
     highlight_enabled = st.checkbox("Highlight > ")
     if highlight_enabled:
         highlight_value = st.number_input("Enter the value for highlighting", min_value=0)
         df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=highlight_value, mode='highlight')
-    
+    else:
+        df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, mode='highlight')
+
     st.subheader("Daily Chart Data (Highlight)")
     st.write(df_daily)
 
-    # Display daily data in percentage
     percentage_enabled = st.checkbox("Calculate Percentage > %")
     if percentage_enabled:
         percentage_value = st.number_input("Enter the value for percentage calculation", min_value=0)
         df_daily_percentage = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=percentage_value, mode='percentage')
-        st.subheader("Daily Chart Data (Percentage)")
-        st.write(df_daily_percentage)
+    else:
+        df_daily_percentage = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, mode='percentage')
 
-    # Download button for Excel
-    excel_bytes = to_excel_bytes(df_daily.data)  # use .data to get the underlying DataFrame
-    st.download_button(
-        label="Download Daily Chart Data",
-        data=excel_bytes,
-        file_name=f"daily_chart_data_{selected_coin}_{selected_date}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-    # Display the current time
+    st.subheader("Daily Chart Data (Percentage)")
+    st.write(df_daily_percentage)
     current_time = pd.to_datetime('now').strftime("%Y-%m-%d %H:%M:%S")
     st.write(f"Current Time: {current_time}")
 
-    # Rerun the app every 30 seconds
     time.sleep(30)
     st.experimental_rerun()
 
