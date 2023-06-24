@@ -79,19 +79,24 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
     if timeframe == '5min' or timeframe == '15min':
         column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
     else:
-        column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
+     column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
 
     query = f"""
         SELECT price,
-            {', '.join([f"SUM(CASE WHEN DATEPART(MINUTE, timestamp) = {interval} THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
+            {', '.join([f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval} AND DATEPART(MINUTE, timestamp) >= 0 AND DATEPART(MINUTE, timestamp) < 60 THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
         FROM {coin}usdt
         WHERE CONVERT(DATE, timestamp) = '{selected_date}'
-        GROUP BY price
+     GROUP BY price
     """
+
+
 
     with connection.cursor(as_dict=True) as cursor:
         cursor.execute(query)
         data = cursor.fetchall()
+
+    # Rest of your code
+
 
     df = pd.DataFrame(data)
     df = df.apply(pd.to_numeric, errors='ignore')
@@ -121,7 +126,6 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
         raise ValueError("Invalid mode. Choose either 'highlight' or 'percentage'.")
 
     return df_styled
-
 
 
 # # Usage examples
