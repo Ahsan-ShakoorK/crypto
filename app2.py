@@ -1,66 +1,216 @@
 import streamlit as st
-from sqlalchemy import create_engine
+import pymssql
 import pandas as pd
+import time
+from datetime import datetime, timedelta
 
-# Establish connection to PostgreSQL server
-def get_db_connection():
-    connection = psycopg2.connect(
-        host='ahsanpost.postgres.database.azure.com',
-        user='ahsan',
-        password='name@123',
-        dbname='postdb',
-        sslmode='require'
-    )
-    return connection
-def fetch_trading_data(coin): 
+# Establish connection to SQL Server
+connection = pymssql.connect(
+    server='A2NWPLSK14SQL-v06.shr.prod.iad2.secureserver.net',
+    user='dbahsantrade',
+    password='Pak@1947',
+    database='db_ran'
+)
+
+def fetch_trading_data(coin):
+    now = datetime.now()
+    five_minute = now - timedelta(minutes=now.minute % 5, seconds=now.second, microseconds=now.microsecond)
+    fifteen_minute = now - timedelta(minutes=now.minute % 15, seconds=now.second, microseconds=now.microsecond)
+    one_hour = now.replace(minute=0, second=0, microsecond=0)
+
     query = f"""
         SELECT price,
-            SUM(CASE WHEN timestamp >= date_trunc('hour', CURRENT_TIMESTAMP) + interval '1 minute' * (FLOOR(EXTRACT(MINUTE FROM CURRENT_TIMESTAMP) / 5)*5) AND timestamp < date_trunc('hour', CURRENT_TIMESTAMP) + interval '1 minute' * ((FLOOR(EXTRACT(MINUTE FROM CURRENT_TIMESTAMP) / 5) + 1)*5) THEN volume ELSE 0 END) AS volume_5min,
-            SUM(CASE WHEN timestamp >= date_trunc('hour', CURRENT_TIMESTAMP) - interval '5 minutes' + interval '1 minute' * (FLOOR(EXTRACT(MINUTE FROM CURRENT_TIMESTAMP - interval '5 minutes') / 5)*5) AND timestamp < date_trunc('hour', CURRENT_TIMESTAMP) - interval '5 minutes' + interval '1 minute' * ((FLOOR(EXTRACT(MINUTE FROM CURRENT_TIMESTAMP - interval '5 minutes') / 5) + 1)*5) THEN volume ELSE 0 END) AS volume_5min_before,
-            SUM(CASE WHEN timestamp >= date_trunc('hour', CURRENT_TIMESTAMP) + interval '1 minute' * (FLOOR(EXTRACT(MINUTE FROM CURRENT_TIMESTAMP) / 15)*15) AND timestamp < date_trunc('hour', CURRENT_TIMESTAMP) + interval '1 minute' * ((FLOOR(EXTRACT(MINUTE FROM CURRENT_TIMESTAMP) / 15) + 1)*15) THEN volume ELSE 0 END) AS volume_15min,
-            SUM(CASE WHEN timestamp >= date_trunc('hour', CURRENT_TIMESTAMP) - interval '15 minutes' + interval '1 minute' * (FLOOR(EXTRACT(MINUTE FROM CURRENT_TIMESTAMP - interval '15 minutes') / 15)*15) AND timestamp < date_trunc('hour', CURRENT_TIMESTAMP) - interval '15 minutes' + interval '1 minute' * ((FLOOR(EXTRACT(MINUTE FROM CURRENT_TIMESTAMP - interval '15 minutes') / 15) + 1)*15) THEN volume ELSE 0 END) AS volume_15min_before,
-            SUM(CASE WHEN timestamp >= date_trunc('hour', CURRENT_TIMESTAMP) AND timestamp < date_trunc('hour', CURRENT_TIMESTAMP) + interval '1 hour' THEN volume ELSE 0 END) AS volume_60min,
-            SUM(CASE WHEN timestamp >= date_trunc('hour', CURRENT_TIMESTAMP) - interval '1 hour' AND timestamp < date_trunc('hour', CURRENT_TIMESTAMP) THEN volume ELSE 0 END) AS volume_60min_before
+            SUM(CASE WHEN timestamp >= '{five_minute}' AND timestamp < '{five_minute + timedelta(minutes=5)}' THEN volume ELSE 0 END) AS volume_5min,
+            SUM(CASE WHEN timestamp >= '{five_minute - timedelta(minutes=5)}' AND timestamp < '{five_minute}' THEN volume ELSE 0 END) AS volume_5min_before,
+            SUM(CASE WHEN timestamp >= '{fifteen_minute}' AND timestamp < '{fifteen_minute + timedelta(minutes=15)}' THEN volume ELSE 0 END) AS volume_15min,
+            SUM(CASE WHEN timestamp >= '{fifteen_minute - timedelta(minutes=15)}' AND timestamp < '{fifteen_minute}' THEN volume ELSE 0 END) AS volume_15min_before,
+            SUM(CASE WHEN timestamp >= '{one_hour}' AND timestamp < '{one_hour + timedelta(hours=1)}' THEN volume ELSE 0 END) AS volume_60min,
+            SUM(CASE WHEN timestamp >= '{one_hour - timedelta(hours=1)}' AND timestamp < '{one_hour}' THEN volume ELSE 0 END) AS volume_60min_before
         FROM {coin}usdt
-        WHERE timestamp >= CURRENT_DATE
+        WHERE timestamp >= CAST(GETDATE() AS DATE)
         GROUP BY price
     """
-    df = pd.read_sql_query(query, get_db_connection())
+
+    with connection.cursor(as_dict=True) as cursor:
+        cursor.execute(query)
+        data = cursor.fetchall()
+
+
+    df = pd.DataFrame(data)
+    df = df.apply(pd.to_numeric, errors='ignore')  # Convert all columns to numeric
+    df = df.sort_values('price', ascending=False)
+
+    volume_columns = ['volume_5min', 'volume_5min_before', 'volume_15min', 'volume_15min_before', 'volume_60min', 'volume_60min_before']
+
+    # Apply rounding to the volume columns
+    df[volume_columns] = df[volume_columns].round(0)
+
+    df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
     df = df.rename(columns={
         'volume_5min': '5m',
-        'volume_5min_before': '5m_before',
+        'volume_5min_before': '5m_b',
         'volume_15min': '15m',
-        'volume_15min_before': '15m_before',
+        'volume_15min_before': '15m_b',
         'volume_60min': '60m',
-        'volume_60min_before': '60m_before'})
-    df = df.round(8)
-    st.write(df)
-    return df
+        'volume_60min_before': '60m_b'
+    })
+
+    df.set_index('price', inplace=True)
+
+    df_styled = df.style.set_table_styles([
+        {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
+        {'selector': 'td:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
+        {'selector': 'td', 'props': [('text-align', 'right')]}
+    ])
+
+    return df_styled
+
+def fetch_daily_data_highlight(coin, selected_date, timeframe, highlight_value=None):
+    intervals = {
+        '5min': list(range(0, 24*60, 5)),
+        '15min': list(range(0, 24*60, 15)),
+        '1hour': list(range(24))
+    }
+    interval_list = intervals[timeframe]
+
+    if timeframe == '5min' or timeframe == '15min':
+        column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
+    else:
+        column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
+
+    query = f"""
+        SELECT price,
+            {', '.join([f"SUM(CASE WHEN DATEPART(MINUTE, timestamp) = {interval} THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
+        FROM {coin}usdt
+        WHERE CONVERT(DATE, timestamp) = '{selected_date}'
+        GROUP BY price
+    """
+
+    with connection.cursor(as_dict=True) as cursor:
+        cursor.execute(query)
+        data = cursor.fetchall()
+
+    df = pd.DataFrame(data)
+    df = df.apply(pd.to_numeric, errors='ignore')  
+    df = df.sort_values('price', ascending=False)
+    volume_columns = [col for col in df.columns if 'volume_' in col]
+
+    if volume_columns:
+        df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
+
+    df.columns = ['price'] + column_names
+    df['price'] = df['price'].apply(lambda x: f"{x:.8f}")
+    df.set_index('price', inplace=True)
+
+    df_styled = df.style.set_table_styles([
+        {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
+        {'selector': 'td:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
+        {'selector': 'td', 'props': [('text-align', 'right')]},
+    ])
+
+    if highlight_value is not None:
+        df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if x > highlight_value else '', subset=column_names)
+
+    return df_styled
+
+def fetch_daily_data_percentage(coin, selected_date, timeframe, percentage_value=None):
+    intervals = {
+        '5min': list(range(0, 24*60, 5)),
+        '15min': list(range(0, 24*60, 15)),
+        '1hour': list(range(24))
+    }
+    interval_list = intervals[timeframe]
+
+    if timeframe == '5min' or timeframe == '15min':
+        column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
+    else:
+        column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
+
+    query = f"""
+        SELECT price,
+            {', '.join([f"SUM(CASE WHEN DATEPART(MINUTE, timestamp) = {interval} THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
+        FROM {coin}usdt
+        WHERE CONVERT(DATE, timestamp) = '{selected_date}'
+        GROUP BY price
+    """
+
+    with connection.cursor(as_dict=True) as cursor:
+        cursor.execute(query)
+        data = cursor.fetchall()
+
+    df = pd.DataFrame(data)
+    df = df.apply(pd.to_numeric, errors='ignore')  
+    df = df.sort_values('price', ascending=False)
+    volume_columns = [col for col in df.columns if 'volume_' in col]
+
+    if volume_columns:
+        df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
+
+    df.columns = ['price'] + column_names
+    df['price'] = df['price'].apply(lambda x: f"{x:.8f}")
+    df.set_index('price', inplace=True)
+
+    df_styled = df.style.set_table_styles([
+        {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
+        {'selector': 'td:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
+        {'selector': 'td', 'props': [('text-align', 'right')]},
+    ])
+
+    if percentage_value is not None:
+        df_styled.data = df.apply(lambda x: (x/percentage_value)*100 if percentage_value else x)
+
+    return df_styled
 
 def main():
     # Set Streamlit app title and layout
     # st.title("Cryptocurrency Market Trading Data")
-    # st.write("Market data retrieved from PostgreSQL server")
+    # st.write("Market data retrieved from SQL Server")
 
     # Get the list of coins
-    coins = ["sxp", "chess", "blz", "joe", "perl"]
+    coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil", "cfx", "adx", "chz", "bel", "alpaca", "elf", "epx", "pros", "t", "dar", "agix", "mob", "id", "trx", "key", "tru", "amb", "magic", "lina", "lever"]
 
     # Create a selectbox for coin selection
     selected_coin = st.selectbox("Select a coin", coins)
 
-    # Fetch trading data for the selected coin
-    df = fetch_trading_data(selected_coin)
+    # Fetch and display trading data for the selected coin
+    df_trading = fetch_trading_data(selected_coin)
+    # st.subheader("Latest Trading Data")
+    st.write(df_trading)
 
-    # Inject custom CSS to style the table
-    table_style = """
-        <style>
-        .dataframe {
-            width: 90%;
-            margin: auto;
-        }
-        </style>
-    """
-    st.markdown(table_style, unsafe_allow_html=True)
+    selected_date = st.date_input('Select a date', datetime.now())
+    selected_date = pd.to_datetime(selected_date).strftime('%Y-%m-%d')
+
+    # Add a selection for timeframes
+    timeframes = ["5min", "15min", "1hour"]
+    selected_timeframe = st.selectbox("Timeframe", timeframes)
+
+    # Fetch and display daily data for the selected coin and date
+    highlight_enabled = st.checkbox("Highlight > ")
+    if highlight_enabled:
+        highlight_value = st.number_input("Enter the value for highlighting", min_value=0)
+        df_daily = fetch_daily_data_highlight(selected_coin, selected_date, selected_timeframe, highlight_value)
+    else:
+        df_daily = fetch_daily_data_highlight(selected_coin, selected_date, selected_timeframe)
+
+    st.subheader("Daily Chart Data (Highlight)")
+    st.write(df_daily)
+
+    percentage_enabled = st.checkbox("Calculate Percentage > %")
+    if percentage_enabled:
+        percentage_value = st.number_input("Enter the value for percentage calculation", min_value=0)
+        df_daily_percentage = fetch_daily_data_percentage(selected_coin, selected_date, selected_timeframe, percentage_value)
+    else:
+        df_daily_percentage = fetch_daily_data_percentage(selected_coin, selected_date, selected_timeframe)
+
+    st.subheader("Daily Chart Data (Percentage)")
+    st.write(df_daily_percentage)
+
+    current_time = pd.to_datetime('now').strftime("%Y-%m-%d %H:%M:%S")
+    st.write(f"Current Time: {current_time}")
+
+    time.sleep(30)
+    st.experimental_rerun()
+
 
 if __name__ == '__main__':
     main()

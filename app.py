@@ -65,10 +65,10 @@ def fetch_trading_data(coin):
 
     return df_styled
 
-def fetch_daily_data_highlight(coin, selected_date, timeframe, highlight_value=None):
+def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='highlight'):
     intervals = {
-        '5min': list(range(0, 24*60, 5)),
-        '15min': list(range(0, 24*60, 15)),
+        '5min': list(range(0, 24 * 60, 5)),
+        '15min': list(range(0, 24 * 60, 15)),
         '1hour': list(range(24))
     }
     interval_list = intervals[timeframe]
@@ -91,7 +91,7 @@ def fetch_daily_data_highlight(coin, selected_date, timeframe, highlight_value=N
         data = cursor.fetchall()
 
     df = pd.DataFrame(data)
-    df = df.apply(pd.to_numeric, errors='ignore')  
+    df = df.apply(pd.to_numeric, errors='ignore')
     df = df.sort_values('price', ascending=False)
     volume_columns = [col for col in df.columns if 'volume_' in col]
 
@@ -108,58 +108,25 @@ def fetch_daily_data_highlight(coin, selected_date, timeframe, highlight_value=N
         {'selector': 'td', 'props': [('text-align', 'right')]},
     ])
 
-    if highlight_value is not None:
-        df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if x > highlight_value else '', subset=column_names)
-
-    return df_styled
-
-def fetch_daily_data_percentage(coin, selected_date, timeframe, percentage_value=None):
-    intervals = {
-        '5min': list(range(0, 24*60, 5)),
-        '15min': list(range(0, 24*60, 15)),
-        '1hour': list(range(24))
-    }
-    interval_list = intervals[timeframe]
-
-    if timeframe == '5min' or timeframe == '15min':
-        column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
+    if mode == 'highlight':
+        if value is not None:
+            df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if x > value else '', subset=column_names)
+    elif mode == 'percentage':
+        if value is not None:
+            df_styled.data = df.apply(lambda x: (x / value) * 100 if value else x)
     else:
-        column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
-
-    query = f"""
-        SELECT price,
-            {', '.join([f"SUM(CASE WHEN DATEPART(MINUTE, timestamp) = {interval} THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
-        FROM {coin}usdt
-        WHERE CONVERT(DATE, timestamp) = '{selected_date}'
-        GROUP BY price
-    """
-
-    with connection.cursor(as_dict=True) as cursor:
-        cursor.execute(query)
-        data = cursor.fetchall()
-
-    df = pd.DataFrame(data)
-    df = df.apply(pd.to_numeric, errors='ignore')  
-    df = df.sort_values('price', ascending=False)
-    volume_columns = [col for col in df.columns if 'volume_' in col]
-
-    if volume_columns:
-        df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
-
-    df.columns = ['price'] + column_names
-    df['price'] = df['price'].apply(lambda x: f"{x:.8f}")
-    df.set_index('price', inplace=True)
-
-    df_styled = df.style.set_table_styles([
-        {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
-        {'selector': 'td:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
-        {'selector': 'td', 'props': [('text-align', 'right')]},
-    ])
-
-    if percentage_value is not None:
-        df_styled.data = df.apply(lambda x: (x/percentage_value)*100 if percentage_value else x)
+        raise ValueError("Invalid mode. Choose either 'highlight' or 'percentage'.")
 
     return df_styled
+
+
+# # Usage examples
+# # Highlight values greater than 100
+# highlighted_df = fetch_daily_data_combined('btc', '2023-06-25', '5min', value=100, mode='highlight')
+
+# # Show percentages based on value 100
+# percentage_df = fetch_daily_data_combined('btc', '2023-06-25', '5min', value=100, mode='percentage')
+
 
 def main():
     # Set Streamlit app title and layout
