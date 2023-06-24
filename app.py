@@ -81,9 +81,17 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
     else:
         column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
 
+
+    current_time = datetime.now()
+    is_today = selected_date == current_time.strftime('%Y-%m-%d')
+
+    # Limit to current hour and minute if the selected date is today
+    max_hour = current_time.hour if is_today else 23
+    max_minute = current_time.minute if is_today else 59
+
     query = f"""
         SELECT price,
-            {', '.join([f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval // 60} AND DATEPART(MINUTE, timestamp) >= {interval % 60} AND DATEPART(MINUTE, timestamp) < {interval % 60 + 5 if timeframe != '1hour' else 60} THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
+            {', '.join([f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval // 60} AND DATEPART(MINUTE, timestamp) >= {interval % 60} AND DATEPART(MINUTE, timestamp) < {interval % 60 + 5 if timeframe != '1hour' else 60} THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list if (interval // 60) < max_hour or ((interval // 60) == max_hour and (interval % 60) <= max_minute)])}
         FROM {coin}usdt
         WHERE CONVERT(DATE, timestamp) = '{selected_date}'
         GROUP BY price
