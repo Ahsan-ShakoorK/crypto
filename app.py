@@ -129,6 +129,13 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
 # # Show percentages based on value 100
 # percentage_df = fetch_daily_data_combined('btc', '2023-06-25', '5min', value=100, mode='percentage')
 
+def to_excel_bytes(df):
+    output = io.BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df.to_excel(writer, index=True, sheet_name='Sheet1')
+    writer.save()
+    output.seek(0)
+    return output.getvalue()
 
 def main():
     # Set Streamlit app title and layout
@@ -153,32 +160,43 @@ def main():
     timeframes = ["5min", "15min", "1hour"]
     selected_timeframe = st.selectbox("Timeframe", timeframes)
 
-    # Fetch and display daily data for the selected coin and date
+    # Fetch daily data
+    df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, mode='highlight').data
+
+    # Highlight values greater than a certain threshold
     highlight_enabled = st.checkbox("Highlight > ")
     if highlight_enabled:
         highlight_value = st.number_input("Enter the value for highlighting", min_value=0)
-        df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=highlight_value, mode='highlight')
-    else:
-        df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, mode='highlight')
+        df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=highlight_value, mode='highlight').data
 
     st.subheader("Daily Chart Data (Highlight)")
     st.write(df_daily)
 
+    # Display daily data in percentage
     percentage_enabled = st.checkbox("Calculate Percentage > %")
     if percentage_enabled:
         percentage_value = st.number_input("Enter the value for percentage calculation", min_value=0)
-        df_daily_percentage = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=percentage_value, mode='percentage')
-    else:
-        df_daily_percentage = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, mode='percentage')
+        df_daily_percentage = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=percentage_value, mode='percentage').data
+        st.subheader("Daily Chart Data (Percentage)")
+        st.write(df_daily_percentage)
 
-    st.subheader("Daily Chart Data (Percentage)")
-    st.write(df_daily_percentage)
+    # Download button for Excel
+    if st.button("Download Daily Chart Data as Excel"):
+        excel_bytes = to_excel_bytes(df_daily)
+        st.download_button(
+            label="Click to Download",
+            data=excel_bytes,
+            file_name=f"daily_chart_data_{selected_coin}_{selected_date}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    # Display the current time
     current_time = pd.to_datetime('now').strftime("%Y-%m-%d %H:%M:%S")
     st.write(f"Current Time: {current_time}")
 
+    # Rerun the app every 30 seconds
     time.sleep(30)
     st.experimental_rerun()
-
 
 if __name__ == '__main__':
     main()
