@@ -170,8 +170,17 @@ def main():
         percentage_value = st.number_input("Enter the value for percentage calculation", min_value=0)
         df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=percentage_value, mode='percentage').data
 
+    # Create a copy of the dataframe to apply styles
+    df_styled = df_daily.copy()
+
+    # Apply background color style for values greater than a certain threshold
+    if highlight_enabled:
+        for col in df_styled.columns:
+            df_styled[col] = df_styled[col].apply(lambda x: 'background-color: yellow' if x > highlight_value else '')
+
+    # Display the styled dataframe
     st.subheader("Daily Chart Data")
-    st.write(df_daily)
+    st.write(df_styled)
 
     # Download button for Excel
     if st.button("Download Daily Chart Data as Excel"):
