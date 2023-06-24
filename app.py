@@ -79,15 +79,16 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
     if timeframe == '5min' or timeframe == '15min':
         column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
     else:
-        column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
+     column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
 
     query = f"""
         SELECT price,
-            {', '.join([f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval // 60} AND DATEPART(MINUTE, timestamp) >= {interval % 60} AND DATEPART(MINUTE, timestamp) < {interval % 60 + 5 if timeframe != '1hour' else 60} THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
+            {', '.join([f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval} AND DATEPART(MINUTE, timestamp) >= 0 AND DATEPART(MINUTE, timestamp) < 60 THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
         FROM {coin}usdt
         WHERE CONVERT(DATE, timestamp) = '{selected_date}'
-        GROUP BY price
+     GROUP BY price
     """
+
 
 
     with connection.cursor(as_dict=True) as cursor:
