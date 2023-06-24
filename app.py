@@ -79,24 +79,19 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
     if timeframe == '5min' or timeframe == '15min':
         column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
     else:
-     column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
+        column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
 
     query = f"""
         SELECT price,
             {', '.join([f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval} AND DATEPART(MINUTE, timestamp) >= 0 AND DATEPART(MINUTE, timestamp) < 60 THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
         FROM {coin}usdt
         WHERE CONVERT(DATE, timestamp) = '{selected_date}'
-     GROUP BY price
+        GROUP BY price
     """
-
-
 
     with connection.cursor(as_dict=True) as cursor:
         cursor.execute(query)
         data = cursor.fetchall()
-
-    # Rest of your code
-
 
     df = pd.DataFrame(data)
     df = df.apply(pd.to_numeric, errors='ignore')
@@ -122,18 +117,12 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
     elif mode == 'percentage':
         if value is not None:
             df_styled.data = df.apply(lambda x: (x / value) * 100 if value else x)
+            df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if x > 100 else '', subset=column_names)  # Highlight values > 100
     else:
         raise ValueError("Invalid mode. Choose either 'highlight' or 'percentage'.")
 
     return df_styled
 
-
-# # Usage examples
-# # Highlight values greater than 100
-# highlighted_df = fetch_daily_data_combined('btc', '2023-06-25', '5min', value=100, mode='highlight')
-
-# # Show percentages based on value 100
-# percentage_df = fetch_daily_data_combined('btc', '2023-06-25', '5min', value=100, mode='percentage')
 
 def to_excel_bytes(df):
     output = BytesIO()
@@ -143,11 +132,10 @@ def to_excel_bytes(df):
     return output.getvalue()
 
 
-
 def main():
     # Set Streamlit app title and layout
-    # st.title("Cryptocurrency Market Trading Data")
-    # st.write("Market data retrieved from SQL Server")
+    st.title("Cryptocurrency Market Trading Data")
+    st.write("Market data retrieved from SQL Server")
 
     # Get the list of coins
     coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil", "cfx", "adx", "chz", "bel", "alpaca", "elf", "epx", "pros", "t", "dar", "agix", "mob", "id", "trx", "key", "tru", "amb", "magic", "lina", "lever"]
@@ -157,7 +145,7 @@ def main():
 
     # Fetch and display trading data for the selected coin
     df_trading = fetch_trading_data(selected_coin)
-    # st.subheader("Latest Trading Data")
+    st.subheader("Latest Trading Data")
     st.write(df_trading)
 
     selected_date = st.date_input('Select a date', datetime.now())
@@ -171,21 +159,19 @@ def main():
     df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, mode='highlight').data
 
     # Highlight values greater than a certain threshold
-    highlight_enabled = st.checkbox("Highlight > ")
+    highlight_enabled = st.checkbox("Highlight values greater than:")
     if highlight_enabled:
         highlight_value = st.number_input("Enter the value for highlighting", min_value=0)
         df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=highlight_value, mode='highlight').data
 
-    st.subheader("Daily Chart Data (Highlight)")
-    st.write(df_daily)
-
     # Display daily data in percentage
-    percentage_enabled = st.checkbox("Calculate Percentage > %")
+    percentage_enabled = st.checkbox("Display data in percentage")
     if percentage_enabled:
         percentage_value = st.number_input("Enter the value for percentage calculation", min_value=0)
-        df_daily_percentage = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=percentage_value, mode='percentage').data
-        st.subheader("Daily Chart Data (Percentage)")
-        st.write(df_daily_percentage)
+        df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=percentage_value, mode='percentage').data
+
+    st.subheader("Daily Chart Data")
+    st.write(df_daily)
 
     # Download button for Excel
     if st.button("Download Daily Chart Data as Excel"):
@@ -204,6 +190,7 @@ def main():
     # Rerun the app every 30 seconds
     time.sleep(30)
     st.experimental_rerun()
+
 
 if __name__ == '__main__':
     main()
