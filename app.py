@@ -89,6 +89,7 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
         GROUP BY price
     """
 
+
     with connection.cursor(as_dict=True) as cursor:
         cursor.execute(query)
         data = cursor.fetchall()
