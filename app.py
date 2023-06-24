@@ -134,7 +134,6 @@ def to_excel_bytes(df):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, sheet_name='Sheet1')
-        writer.save()
     output.seek(0)
     return output.getvalue()
 
