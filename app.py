@@ -155,9 +155,9 @@ def main():
     highlight_enabled = st.checkbox("Highlight > ")
     if highlight_enabled:
         highlight_value = st.number_input("Enter the value for highlighting", min_value=0)
-        df_daily = fetch_daily_data_highlight(selected_coin, selected_date, selected_timeframe, highlight_value)
+        df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=highlight_value, mode='highlight')
     else:
-        df_daily = fetch_daily_data_highlight(selected_coin, selected_date, selected_timeframe)
+        df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, mode='highlight')
 
     st.subheader("Daily Chart Data (Highlight)")
     st.write(df_daily)
@@ -165,13 +165,12 @@ def main():
     percentage_enabled = st.checkbox("Calculate Percentage > %")
     if percentage_enabled:
         percentage_value = st.number_input("Enter the value for percentage calculation", min_value=0)
-        df_daily_percentage = fetch_daily_data_percentage(selected_coin, selected_date, selected_timeframe, percentage_value)
+        df_daily_percentage = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=percentage_value, mode='percentage')
     else:
-        df_daily_percentage = fetch_daily_data_percentage(selected_coin, selected_date, selected_timeframe)
+        df_daily_percentage = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, mode='percentage')
 
     st.subheader("Daily Chart Data (Percentage)")
     st.write(df_daily_percentage)
-
     current_time = pd.to_datetime('now').strftime("%Y-%m-%d %H:%M:%S")
     st.write(f"Current Time: {current_time}")
 
