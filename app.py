@@ -159,19 +159,7 @@ def main():
     # Add a selection for timeframes
     timeframes = ["5min", "15min", "1hour"]
     selected_timeframe = st.selectbox("Timeframe", timeframes)
-    df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, mode='highlight')
-
-    # ... rest of your code ...
-
-    # Download button for Excel
-    excel_bytes = to_excel_bytes(df_daily.data)  # use .data to get the underlying DataFrame
-    st.download_button(
-        label="Download Daily Chart Data",
-        data=excel_bytes,
-        file_name=f"daily_chart_data_{selected_coin}_{selected_date}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
+    
     # Fetch and display daily data for the selected coin and date
     highlight_enabled = st.checkbox("Highlight > ")
     if highlight_enabled:
