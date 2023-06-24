@@ -129,13 +129,6 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
 # # Show percentages based on value 100
 # percentage_df = fetch_daily_data_combined('btc', '2023-06-25', '5min', value=100, mode='percentage')
 
-def to_excel_bytes(df):
-    output = io.BytesIO()
-    writer = pd.ExcelWriter(output, engine='xlsxwriter')
-    df.to_excel(writer, index=True, sheet_name='Sheet1')
-    writer.save()
-    output.seek(0)
-    return output.getvalue()
 
 def main():
     # Set Streamlit app title and layout
@@ -159,7 +152,7 @@ def main():
     # Add a selection for timeframes
     timeframes = ["5min", "15min", "1hour"]
     selected_timeframe = st.selectbox("Timeframe", timeframes)
-    
+
     # Fetch and display daily data for the selected coin and date
     highlight_enabled = st.checkbox("Highlight > ")
     if highlight_enabled:
