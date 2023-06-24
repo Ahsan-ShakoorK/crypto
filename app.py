@@ -111,6 +111,7 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
         {'selector': 'td', 'props': [('text-align', 'right')]},
     ])
 
+    # Apply background color style for values greater than a certain threshold
     if mode == 'highlight':
         if value is not None:
             df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if x > value else '', subset=column_names)
@@ -122,6 +123,7 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
         raise ValueError("Invalid mode. Choose either 'highlight' or 'percentage'.")
 
     return df_styled
+
 
 
 def to_excel_bytes(df):
@@ -170,17 +172,8 @@ def main():
         percentage_value = st.number_input("Enter the value for percentage calculation", min_value=0)
         df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=percentage_value, mode='percentage').data
 
-    # Create a copy of the dataframe to apply styles
-    df_styled = df_daily.copy()
-
-    # Apply background color style for values greater than a certain threshold
-    if highlight_enabled:
-        for col in df_styled.columns:
-            df_styled[col] = df_styled[col].apply(lambda x: 'background-color: yellow' if x > highlight_value else '')
-
-    # Display the styled dataframe
     st.subheader("Daily Chart Data")
-    st.write(df_styled)
+    st.write(df_daily)
 
     # Download button for Excel
     if st.button("Download Daily Chart Data as Excel"):
