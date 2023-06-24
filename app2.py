@@ -128,11 +128,12 @@ def fetch_daily_data_percentage(coin, selected_date, timeframe, percentage_value
 
     query = f"""
         SELECT price,
-            {', '.join([f"SUM(CASE WHEN DATEPART(MINUTE, timestamp) = {interval} THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
+            {', '.join([f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval} AND DATEPART(MINUTE, timestamp) >= 0 AND DATEPART(MINUTE, timestamp) < 60 THEN volume ELSE 0 END) AS volume_{interval}{timeframe}" for interval in interval_list])}
         FROM {coin}usdt
         WHERE CONVERT(DATE, timestamp) = '{selected_date}'
         GROUP BY price
     """
+
 
     with connection.cursor(as_dict=True) as cursor:
         cursor.execute(query)
