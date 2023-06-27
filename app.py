@@ -139,7 +139,6 @@ def to_excel_bytes(df):
     output.seek(0)
     return output.getvalue()
 
-
 def main():
     # Set Streamlit app title and layout
     st.title("Cryptocurrency Market Trading Data")
@@ -164,26 +163,26 @@ def main():
     selected_timeframe = st.selectbox("Timeframe", timeframes)
 
     # Fetch daily data
-    df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, mode='highlight').data
+    df_daily_styled = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, mode='highlight')
 
     # Highlight values greater than a certain threshold
     highlight_enabled = st.checkbox("Highlight values greater than:")
     if highlight_enabled:
         highlight_value = st.number_input("Enter the value for highlighting", min_value=0)
-        df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=highlight_value, mode='highlight').data
+        df_daily_styled = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=highlight_value, mode='highlight')
 
     # Display daily data in percentage
     percentage_enabled = st.checkbox("Display data in percentage")
     if percentage_enabled:
         percentage_value = st.number_input("Enter the value for percentage calculation", min_value=0)
-        df_daily = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=percentage_value, mode='percentage').data
+        df_daily_styled = fetch_daily_data_combined(selected_coin, selected_date, selected_timeframe, value=percentage_value, mode='percentage')
 
     st.subheader("Daily Chart Data")
-    st.write(df_daily)
+    st.write(df_daily_styled.data)
 
     # Download button for Excel
     if st.button("Download Daily Chart Data as Excel"):
-        excel_bytes = to_excel_bytes(df_daily)
+        excel_bytes = to_excel_bytes(df_daily_styled.data)
         st.download_button(
             label="Click to Download",
             data=excel_bytes,
