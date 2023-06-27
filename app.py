@@ -68,6 +68,12 @@ def fetch_trading_data(coin):
 
     return df_styled
 
+
+def highlight_greater_values(x, value):
+    if isinstance(x, (int, float)) and x > value:
+        return 'background-color: yellow'
+    return ''
+
 def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='highlight'):
     intervals = {
         '5min': list(range(0, 24 * 60, 5)),
@@ -123,17 +129,16 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
         {'selector': 'td', 'props': [('text-align', 'right')]},
     ])
 
-    # Apply background color style for values greater than a certain threshold
     if mode == 'highlight':
         if value is not None:
-            df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if x > value else '', subset=column_names)
+            df_styled = df_styled.applymap(lambda x: highlight_greater_values(x, value), subset=column_names)
     elif mode == 'percentage':
         if value is not None:
             df_styled.data = df.apply(lambda x: (x / value) * 100 if value else x)
             df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if x > 100 else '', subset=column_names)  # Highlight values > 100
     else:
         raise ValueError("Invalid mode. Choose either 'highlight' or 'percentage'.")
-
+    
     return df_styled
 
 
