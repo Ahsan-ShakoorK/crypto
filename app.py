@@ -67,6 +67,7 @@ def fetch_trading_data(coin):
     ])
 
     return df_styled
+
 def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='highlight'):
     intervals = {
         '5min': list(range(0, 24 * 60, 5)),
@@ -78,12 +79,12 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
     if timeframe == '5min':
         column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
         interval_aggregations = [
-            f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval // 60} AND DATEPART(MINUTE, timestamp) >= {interval % 60} AND DATEPART(MINUTE, timestamp) < {(interval + 5) % 60} THEN volume ELSE 0 END) AS volume_{interval}_5min"
+            f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval // 60} AND DATEPART(MINUTE, timestamp) >= {interval % 60} AND DATEPART(MINUTE, timestamp) < {interval % 60 + 5} THEN volume ELSE 0 END) AS volume_{interval}_5min"
             for interval in interval_list]
     elif timeframe == '15min':
         column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
         interval_aggregations = [
-            f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval // 60} AND DATEPART(MINUTE, timestamp) >= {interval % 60} AND DATEPART(MINUTE, timestamp) < {(interval + 15) % 60} THEN volume ELSE 0 END) AS volume_{interval}_15min"
+            f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval // 60} AND DATEPART(MINUTE, timestamp) >= {interval % 60} AND DATEPART(MINUTE, timestamp) < {interval % 60 + 15} THEN volume ELSE 0 END) AS volume_{interval}_15min"
             for interval in interval_list]
     else:
         column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
@@ -125,11 +126,13 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
     # Apply background color style for values greater than a certain threshold
     if mode == 'highlight':
         if value is not None:
-            def highlight_cells(x):
-                print(f'Cell Value: {x}, Cell Type: {type(x)}, Highlight Value: {value}, Highlight Type: {type(value)}')
-                return 'background-color: yellow' if isinstance(x, (int, float)) and x > value else ''
-            
-            df_styled = df_styled.applymap(highlight_cells, subset=column_names)
+            df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if x > value else '', subset=column_names)
+    elif mode == 'percentage':
+        if value is not None:
+            df_styled.data = df.apply(lambda x: (x / value) * 100 if value else x)
+            df_styled = df_styled.applymap(lambda x: 'background-color: yellow' if x > 100 else '', subset=column_names)  # Highlight values > 100
+    else:
+        raise ValueError("Invalid mode. Choose either 'highlight' or 'percentage'.")
 
     return df_styled
 
