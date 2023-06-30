@@ -66,6 +66,7 @@ def fetch_trading_data(coin):
     if volume_columns:
         df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
 
+    df.columns = ['price'] + volume_columns
     df['price'] = df['price'].apply(lambda x: f"{x:.8f}")
     df.set_index('price', inplace=True)
 
