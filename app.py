@@ -58,7 +58,8 @@ def fetch_trading_data(coin):
         'volume_60min': '60m',
         'volume_60min_before': '60m_b'
     })
-
+    # df.columns = ['price'] + column_names
+    df['price'] = df['price'].apply(lambda x: f"{x:.8f}")
     df.set_index('price', inplace=True)
 
     df_styled = df.style.set_table_styles([
