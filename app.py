@@ -59,14 +59,6 @@ def fetch_trading_data(coin):
         'volume_60min_before': '60m_b'
     })
     df = pd.DataFrame(data)
-    df = df.apply(pd.to_numeric, errors='ignore')
-    df = df.sort_values('price', ascending=False)
-    volume_columns = [col for col in df.columns if 'volume_' in col]
-
-    if volume_columns:
-        df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
-
-    df.columns = ['price'] + volume_columns
     df['price'] = df['price'].apply(lambda x: f"{x:.8f}")
     df.set_index('price', inplace=True)
 
