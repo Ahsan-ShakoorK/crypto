@@ -47,7 +47,7 @@ def fetch_trading_data(coin):
     volume_columns = ['volume_5min', 'volume_5min_before', 'volume_15min', 'volume_15min_before', 'volume_60min', 'volume_60min_before']
 
     # Apply rounding to the volume columns
-    df[volume_columns] = df[volume_columns].round(0)
+    df[volume_columns] = df[volume_columns].round(7)
 
     df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
     df = df.rename(columns={
