@@ -16,6 +16,7 @@ connection = pymssql.connect(
 )
 
 def fetch_trading_data(coin):
+    pd.set_option('display.float_format', '{:.8g}'.format)
     now = datetime.now()
     five_minute = now - timedelta(minutes=now.minute % 5, seconds=now.second, microseconds=now.microsecond)
     fifteen_minute = now - timedelta(minutes=now.minute % 15, seconds=now.second, microseconds=now.microsecond)
