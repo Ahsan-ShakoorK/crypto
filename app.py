@@ -22,7 +22,7 @@ def fetch_trading_data(coin):
     one_hour = now.replace(minute=0, second=0, microsecond=0)
 
     query = f"""
-        SELECT ROUND(price, 6) AS price,
+        SELECT price,
             SUM(CASE WHEN timestamp >= '{five_minute}' AND timestamp < '{five_minute + timedelta(minutes=5)}' THEN volume ELSE 0 END) AS volume_5min,
             SUM(CASE WHEN timestamp >= '{five_minute - timedelta(minutes=5)}' AND timestamp < '{five_minute}' THEN volume ELSE 0 END) AS volume_5min_before,
             SUM(CASE WHEN timestamp >= '{fifteen_minute}' AND timestamp < '{fifteen_minute + timedelta(minutes=15)}' THEN volume ELSE 0 END) AS volume_15min,
