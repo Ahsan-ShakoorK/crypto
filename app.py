@@ -166,7 +166,7 @@ def main():
     st.write("Market data retrieved from SQL Server")
 
     # Get the list of coins
-    coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil", "cfx", "adx", "chz", "bel", "alpaca", "elf", "epx", "pros", "t", "dar", "agix", "mob", "id", "trx", "key", "tru", "amb", "magic", "lina", "lever", "btc", "eth", "tomo", "dodo", "cvp", "data", "ata", "cos", "fida", "fis", "loom", "super", "pepe", "matic", "ada", "doge", "mav", "xec", "sui", "eos", "ftm", "xlm"]
+    coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil", "cfx", "adx", "chz", "bel", "alpaca", "elf", "epx", "pros", "t", "dar", "agix", "mob", "id", "trx", "key", "tru", "amb", "magic", "lina", "lever", "btc", "eth", "tomo", "dodo", "cvp", "data", "ata", "cos", "fida", "fis", "loom", "super", "pepe", "matic", "ada", "doge"]
     coins.sort()
     # Create a selectbox for coin selection
     selected_coin = st.selectbox("Select a coin", coins)
