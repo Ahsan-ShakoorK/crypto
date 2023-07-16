@@ -7,6 +7,9 @@ from io import BytesIO
 import numpy as np
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
+from datetime import datetime, timedelta
+import pytz
+
 # Modify pandas display options
 pd.set_option('display.max_columns', None)
 pd.set_option('display.expand_frame_repr', False)
@@ -29,8 +32,10 @@ db = client['db_ran']  # Name of your database
 
 def fetch_trading_data(coin):
     collection = db[f'{coin}_trades']
-    now = datetime.now()
-
+    now = datetime.now(pytz.timezone('Asia/Karachi')) # Your local time zone
+    
+    # Convert local time to UTC
+    now = now.astimezone(pytz.utc)
     # Calculate the timeframes
     five_minute = now - timedelta(minutes=now.minute % 5, seconds=now.second, microseconds=now.microsecond)
     fifteen_minute = now - timedelta(minutes=now.minute % 15, seconds=now.second, microseconds=now.microsecond)
