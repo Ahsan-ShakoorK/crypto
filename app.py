@@ -42,7 +42,7 @@ def fetch_trading_data(coin):
     five_minute = now - timedelta(minutes=now.minute % 5)
 
 
-    fifteen_minute = now - timedelta(minutes=15)
+    fifteen_minute = now - timedelta(minutes=now.minute % 15)
 
 
 #    Now, fifteen_minute should be on a 15 minute interval
