@@ -28,15 +28,16 @@ except Exception as e:
 
 db = client['db_ran']  # Name of your database
 
+
 def fetch_trading_data(coin):
-    collection = db[f'{coin}_trades']  # Select the collection from the database
+    collection = db[f'{coin}_trades']
     now = datetime.now().replace(second=0, microsecond=0) 
     now = now.astimezone(pytz.utc)  # Convert the time to UTC
 
     # Calculate the timeframes
     five_minute = now - timedelta(minutes=now.minute % 5)
-    fifteen_minute = now.replace(minute=(now.minute // 15) * 15, second=0)
-    fifteen_minute_before = now - timedelta(minutes=15)
+    fifteen_minute = now - timedelta(minutes=now.minute % 15)
+    fifteen_minute_before = now - timedelta(minutes=now.minute % 15 + 15)
     one_hour = now.replace(minute=0)
 
     # Define a function to generate the common query structure
@@ -70,6 +71,7 @@ def fetch_trading_data(coin):
     for i, time_interval in enumerate([(five_minute, "5min"), (five_minute - timedelta(minutes=5), "5min_before"), 
                                        (fifteen_minute, "15min"), (fifteen_minute_before, "15min_before"), 
                                        (one_hour, "60min"), (one_hour - timedelta(hours=1), "60min_before")]):
+
         start_time, label = time_interval
         end_time = start_time + (timedelta(minutes=5) if "5min" in label else timedelta(minutes=15) if "15min" in label else timedelta(hours=1))
         query = generate_query(start_time, end_time, label)
@@ -87,13 +89,21 @@ def fetch_trading_data(coin):
 
         df = df[df['price'] != 0]
 
+        print(f"Iteration {i} columns: {df.columns}")
+
         if i == 0:
             df_all = df
         else:
             df_all = df_all.merge(df, on='price', how='outer')
 
+    columns = ['price'] + [col for col in df_all.columns if col != 'price']
+    df_all = df_all[columns]
+
     df_all['price'] = df_all['price'].apply(lambda x: '{:.10f}'.format(x))
     df_all = df_all.fillna(0)
+
+    quantity_columns = ['quantity_5min', 'quantity_5min_before', 'quantity_15min', 'quantity_15min_before',
+                      'quantity_60min', 'quantity_60min_before']
 
     column_mapping = {
         'quantity_5min': '5m',
@@ -112,7 +122,6 @@ def fetch_trading_data(coin):
     ])
 
     return df_styled
-
 
 
 
