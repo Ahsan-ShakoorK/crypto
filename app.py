@@ -27,6 +27,11 @@ except Exception as e:
     print(e)
 
 db = client['db_ran']  # Name of your database
+def round_time(dt=None, round_to=15):
+   if dt == None : dt = datetime.now()
+   seconds = (dt.replace(tzinfo=None) - dt.min).seconds
+   rounding = (seconds+round_to/2) // round_to * round_to
+   return dt + timedelta(0,rounding-seconds,-dt.microsecond)
 
 def fetch_trading_data(coin):
     collection = db[f'{coin}_trades']
@@ -35,7 +40,14 @@ def fetch_trading_data(coin):
 
     # Calculate the timeframes
     five_minute = now - timedelta(minutes=now.minute % 5)
-    fifteen_minute = now - timedelta(minutes=now.minute % 15, seconds=now.second, microseconds=now.microsecond)
+# Calculate the timeframes
+    now = datetime.now().replace(second=0, microsecond=0) 
+    now = now.astimezone(pytz.utc)  # Convert the time to UTC
+
+# Round current time to the nearest 15 minute mark
+    fifteen_minute = round_time(now, 15*60)
+
+#    Now, fifteen_minute should be on a 15 minute interval
 
     fifteen_minute_before = now - timedelta(minutes=now.minute % 15 + 15)
     one_hour = now.replace(minute=0)
