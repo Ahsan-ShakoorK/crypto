@@ -9,10 +9,10 @@ from io import BytesIO
 
 # Establish connection to SQL Server
 connection = pymssql.connect(
-    server='A2NWPLSK14SQL-v06.shr.prod.iad2.secureserver.net',
-    user='dbahsantrade',
-    password='Pak@1947',
-    database='db_ran'
+    server='116.202.175.92',
+    user='db_uzairahmed',
+    password='d3faul7',
+    database='db_uzairahmed'
 )
 
 def fetch_trading_data(coin):
@@ -24,13 +24,13 @@ def fetch_trading_data(coin):
 
     query = f"""
         SELECT price,
-            SUM(CASE WHEN timestamp >= '{five_minute}' AND timestamp < '{five_minute + timedelta(minutes=5)}' THEN volume ELSE 0 END) AS volume_5min,
-            SUM(CASE WHEN timestamp >= '{five_minute - timedelta(minutes=5)}' AND timestamp < '{five_minute}' THEN volume ELSE 0 END) AS volume_5min_before,
-            SUM(CASE WHEN timestamp >= '{fifteen_minute}' AND timestamp < '{fifteen_minute + timedelta(minutes=15)}' THEN volume ELSE 0 END) AS volume_15min,
-            SUM(CASE WHEN timestamp >= '{fifteen_minute - timedelta(minutes=15)}' AND timestamp < '{fifteen_minute}' THEN volume ELSE 0 END) AS volume_15min_before,
-            SUM(CASE WHEN timestamp >= '{one_hour}' AND timestamp < '{one_hour + timedelta(hours=1)}' THEN volume ELSE 0 END) AS volume_60min,
-            SUM(CASE WHEN timestamp >= '{one_hour - timedelta(hours=1)}' AND timestamp < '{one_hour}' THEN volume ELSE 0 END) AS volume_60min_before
-        FROM {coin}usdt
+            SUM(CASE WHEN timestamp >= '{five_minute}' AND timestamp < '{five_minute + timedelta(minutes=5)}' THEN quantity ELSE 0 END) AS quantity_5min,
+            SUM(CASE WHEN timestamp >= '{five_minute - timedelta(minutes=5)}' AND timestamp < '{five_minute}' THEN quantity ELSE 0 END) AS quantity_5min_before,
+            SUM(CASE WHEN timestamp >= '{fifteen_minute}' AND timestamp < '{fifteen_minute + timedelta(minutes=15)}' THEN quantity ELSE 0 END) AS quantity_15min,
+            SUM(CASE WHEN timestamp >= '{fifteen_minute - timedelta(minutes=15)}' AND timestamp < '{fifteen_minute}' THEN quantity ELSE 0 END) AS quantity_15min_before,
+            SUM(CASE WHEN timestamp >= '{one_hour}' AND timestamp < '{one_hour + timedelta(hours=1)}' THEN quantity ELSE 0 END) AS quantity_60min,
+            SUM(CASE WHEN timestamp >= '{one_hour - timedelta(hours=1)}' AND timestamp < '{one_hour}' THEN quantity ELSE 0 END) AS quantity_60min_before
+        FROM {coin}_trades
         WHERE timestamp >= CAST(GETDATE() AS DATE)
         GROUP BY price
     """
@@ -44,29 +44,29 @@ def fetch_trading_data(coin):
     df = df.apply(pd.to_numeric, errors='ignore')  # Convert all columns to numeric
     df = df.sort_values('price', ascending=False)
 
-    volume_columns = ['volume_5min', 'volume_5min_before', 'volume_15min', 'volume_15min_before', 'volume_60min', 'volume_60min_before']
+    quantity_columns = ['quantity_5min', 'quantity_5min_before', 'quantity_15min', 'quantity_15min_before', 'quantity_60min', 'quantity_60min_before']
 
-    # Apply rounding to the volume columns
-    df[volume_columns] = df[volume_columns].round(0)
+    # Apply rounding to the quantity columns
+    df[quantity_columns] = df[quantity_columns].round(0)
 
-    df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
+    df = df.loc[~(df[quantity_columns] == 0).all(axis=1)]
     df = df.rename(columns={
-        'volume_5min': '5m',
-        'volume_5min_before': '5m_b',
-        'volume_15min': '15m',
-        'volume_15min_before': '15m_b',
-        'volume_60min': '60m',
-        'volume_60min_before': '60m_b'
+        'quantity_5min': '5m',
+        'quantity_5min_before': '5m_b',
+        'quantity_15min': '15m',
+        'quantity_15min_before': '15m_b',
+        'quantity_60min': '60m',
+        'quantity_60min_before': '60m_b'
     })
     df = pd.DataFrame(data)
     df = df.apply(pd.to_numeric, errors='ignore')
     df = df.sort_values('price', ascending=False)
-    volume_columns = [col for col in df.columns if 'volume_' in col]
+    quantity_columns = [col for col in df.columns if 'quantity_' in col]
 
-    if volume_columns:
-        df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
+    if quantity_columns:
+        df = df.loc[~(df[quantity_columns] == 0).all(axis=1)]
 
-    df.columns = ['price'] + volume_columns
+    df.columns = ['price'] + quantity_columns
     df['price'] = df['price'].apply(lambda x: f"{x:.8f}")
     df.set_index('price', inplace=True)
 
@@ -95,23 +95,23 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
     if timeframe == '5min':
         column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
         interval_aggregations = [
-            f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval // 60} AND DATEPART(MINUTE, timestamp) >= {interval % 60} AND DATEPART(MINUTE, timestamp) < {interval % 60 + 5} THEN volume ELSE 0 END) AS volume_{interval}_5min"
+            f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval // 60} AND DATEPART(MINUTE, timestamp) >= {interval % 60} AND DATEPART(MINUTE, timestamp) < {interval % 60 + 5} THEN quantity ELSE 0 END) AS quantity_{interval}_5min"
             for interval in interval_list]
     elif timeframe == '15min':
         column_names = [f"{str(interval // 60).zfill(2)}:{str(interval % 60).zfill(2)}" for interval in interval_list]
         interval_aggregations = [
-            f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval // 60} AND DATEPART(MINUTE, timestamp) >= {interval % 60} AND DATEPART(MINUTE, timestamp) < {interval % 60 + 15} THEN volume ELSE 0 END) AS volume_{interval}_15min"
+            f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval // 60} AND DATEPART(MINUTE, timestamp) >= {interval % 60} AND DATEPART(MINUTE, timestamp) < {interval % 60 + 15} THEN quantity ELSE 0 END) AS quantity_{interval}_15min"
             for interval in interval_list]
     else:
         column_names = [f"{str(interval).zfill(2)}:00" for interval in interval_list]
         interval_aggregations = [
-            f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval} THEN volume ELSE 0 END) AS volume_{interval}_hour"
+            f"SUM(CASE WHEN DATEPART(HOUR, timestamp) = {interval} THEN quantity ELSE 0 END) AS quantity_{interval}_hour"
             for interval in interval_list]
 
     query = f"""
         SELECT price,
             {', '.join(interval_aggregations)}
-        FROM {coin}usdt
+        FROM {coin}_trades
         WHERE CONVERT(DATE, timestamp) = '{selected_date}'
         GROUP BY price
     """
@@ -124,10 +124,10 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, mode='
     df = pd.DataFrame(data)
     df = df.apply(pd.to_numeric, errors='ignore')
     df = df.sort_values('price', ascending=False)
-    volume_columns = [col for col in df.columns if 'volume_' in col]
+    quantity_columns = [col for col in df.columns if 'quantity_' in col]
 
-    if volume_columns:
-        df = df.loc[~(df[volume_columns] == 0).all(axis=1)]
+    if quantity_columns:
+        df = df.loc[~(df[quantity_columns] == 0).all(axis=1)]
 
     df.columns = ['price'] + column_names
     df['price'] = df['price'].apply(lambda x: f"{x:.8f}")
@@ -166,8 +166,10 @@ def main():
     st.write("Market data retrieved from SQL Server")
 
     # Get the list of coins
-    coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil", "cfx", "adx", "chz", "bel", "alpaca", "elf", "epx", "pros", "t", "dar", "agix", "mob", "id", "trx", "key", "tru", "amb", "magic", "lina", "lever"]
-    # Create a selectbox for coin selection
+    coins = ["sxp", "chess", "blz", "joe", "perl", "ach", "gmt", "xrp", "akro", "zil", "cfx", "adx", "chz", "bel",
+         "alpaca", "elf", "epx", "pros", "t", "dar", "agix", "mob", "id", "trx", "key", "tru", "amb", "magic",
+         "lina", "lever", "btc", "eth", "tomo", "dodo", "cvp", "data", "ata", "cos", "fida", "fis", "loom",
+         "super", "pepe", "matic", "ada", "doge", "mav", "xec", "sui", "eos", "ftm", "xlm"]
     selected_coin = st.selectbox("Select a coin", coins)
 
     # Fetch and display trading data for the selected coin
