@@ -40,12 +40,11 @@ def fetch_trading_data(coin):
 
     # Calculate the timeframes
     five_minute = now - timedelta(minutes=now.minute % 5)
-# Calculate the timeframes
-    now = datetime.now().replace(second=0, microsecond=0) 
-    now = now.astimezone(pytz.utc)  # Convert the time to UTC
+
 
 # Round current time to the nearest 15 minute mark
     fifteen_minute = round_time(now, 15*60)
+
 
 #    Now, fifteen_minute should be on a 15 minute interval
 
