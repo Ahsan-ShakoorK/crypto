@@ -41,7 +41,7 @@ def fetch_trading_data(coin):
 
 
     
-    one_hour = now.replace(minute=0)
+    one_hour = now.replace(minute=0)z
 
     # Define a function to generate the common query structure
     def generate_query(start_time, end_time, time_label):
