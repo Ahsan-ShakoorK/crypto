@@ -36,8 +36,9 @@ def fetch_trading_data(coin):
 
     # Calculate the timeframes
     five_minute = now - timedelta(minutes=now.minute % 5)
-    fifteen_minute = now - timedelta(minutes=now.minute % 15)
-    fifteen_minute_before = fifteen_minute - timedelta(minutes=15)
+    fifteen_minute = now.replace(minute=(now.minute // 15) * 15, second=0)
+    fifteen_minute_before = now - timedelta(minutes=(now.minute // 15 + 1) * 15)
+
 
     
     one_hour = now.replace(minute=0)
