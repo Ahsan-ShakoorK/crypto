@@ -28,7 +28,6 @@ except Exception as e:
 
 db = client['db_ran']  # Name of your database
 
-
 def fetch_trading_data(coin):
     collection = db[f'{coin}_trades']
     now = datetime.now().replace(second=0, microsecond=0) 
@@ -36,11 +35,8 @@ def fetch_trading_data(coin):
 
     # Calculate the timeframes
     five_minute = now - timedelta(minutes=now.minute % 5)
-    fifteen_minute = now.replace(minute=(now.minute // 15) * 15, second=0)
-    fifteen_minute_before = now - timedelta(minutes=(now.minute // 15 + 1) * 15)
-
-
-    
+    fifteen_minute = now - timedelta(minutes=now.minute % 15)
+    fifteen_minute_before = now - timedelta(minutes=now.minute % 15 + 15)
     one_hour = now.replace(minute=0)
 
     # Define a function to generate the common query structure
