@@ -31,7 +31,7 @@ db = client['db_ran']  # Name of your database
 def fetch_trading_data(coin):
     collection = db[f'{coin}_trades']
     now = datetime.now().replace(second=0, microsecond=0) 
-    now = now.astimezone(pytz.utc)  # Convert the time to UTC
+    now = datetime.now()  # Convert the time to UTC
 
     # Calculate the timeframes
     five_minute = now - timedelta(minutes=now.minute % 5)
