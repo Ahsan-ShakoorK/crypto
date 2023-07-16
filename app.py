@@ -34,7 +34,7 @@ def fetch_trading_data(coin):
     collection = db[f'{coin}_trades']
     now = datetime.now()
     now = pytz.timezone('Asia/Karachi').localize(now)  # Localize the time to your timezone
-    now = now.astimezone(pytz.utc)  # Convert the time to UTC
+    # now = now.astimezone(pytz.utc)  # Convert the time to UTC
 
     # Convert local time to UTC
     # now = now.astimezone(pytz.utc)
