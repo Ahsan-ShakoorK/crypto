@@ -42,8 +42,7 @@ def fetch_trading_data(coin):
     five_minute = now - timedelta(minutes=now.minute % 5)
 
 
-# Round current time to the nearest 15 minute mark
-    fifteen_minute = round_time(now, 15*60)
+    fifteen_minute = now - timedelta(minutes=15)
 
 
 #    Now, fifteen_minute should be on a 15 minute interval
