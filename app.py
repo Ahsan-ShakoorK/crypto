@@ -118,6 +118,10 @@ def fetch_trading_data(coin):
 
     df_final = df_final.fillna(0)  # Fill any missing values with 0
 
+    # Reorder columns
+    columns_ordered = ['price', 'quantity_5min', 'quantity_5min_prev', 'quantity_15min', 'quantity_15min_prev', 'quantity_60min', 'quantity_60min_prev']
+    df_final = df_final[columns_ordered]
+
     df_styled = df_final.style.set_table_styles([
         {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
         {'selector': 'td:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
