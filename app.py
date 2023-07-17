@@ -32,23 +32,10 @@ def round_time(dt=None, round_to=15):
    seconds = (dt.replace(tzinfo=None) - dt.min).seconds
    rounding = (seconds+round_to/2) // round_to * round_to
    return dt + timedelta(0,rounding-seconds,-dt.microsecond)
-
 def fetch_trading_data(coin):
     collection = db[f'{coin}_trades']
     now = datetime.now().replace(second=0, microsecond=0) 
     now = now.astimezone(pytz.utc)  # Convert the time to UTC
-
-    # Calculate the timeframes
-    five_minute = now - timedelta(minutes=now.minute % 5)
-
-
-    fifteen_minute = now - timedelta(minutes=now.minute % 15)
-
-
-#    Now, fifteen_minute should be on a 15 minute interval
-
-    fifteen_minute_before = now - timedelta(minutes=now.minute % 15 + 15)
-    one_hour = now.replace(minute=0)
 
     # Define a function to generate the common query structure
     def generate_query(start_time, end_time, time_label):
@@ -76,14 +63,13 @@ def fetch_trading_data(coin):
             }
         ]
 
-    # Fetch the data for each time period
-    df_all = pd.DataFrame()
-    for i, time_interval in enumerate([(five_minute, "5min"), (five_minute - timedelta(minutes=5), "5min_before"), 
-                                       (fifteen_minute, "15min"), (fifteen_minute_before, "15min_before"), 
-                                       (one_hour, "60min"), (one_hour - timedelta(hours=1), "60min_before")]):
+    # Define a list of timeframes
+    timeframes = [("5min", 5), ("15min", 15), ("60min", 60)]
+    dfs = []  # List to hold all dataframes
 
-        start_time, label = time_interval
-        end_time = start_time + (timedelta(minutes=5) if "5min" in label else timedelta(minutes=15) if "15min" in label else timedelta(hours=1))
+    for label, minutes in timeframes:
+        start_time = now - timedelta(minutes=now.minute % minutes)
+        end_time = start_time + timedelta(minutes=minutes) 
         query = generate_query(start_time, end_time, label)
 
         result = collection.aggregate(query)
@@ -98,40 +84,48 @@ def fetch_trading_data(coin):
             df = pd.DataFrame([{'price': 0, f'quantity_{label}': 0}])
 
         df = df[df['price'] != 0]
+        df['price'] = df['price'].apply(lambda x: '{:.10f}'.format(x))
+        df = df.fillna(0)
 
-        print(f"Iteration {i} columns: {df.columns}")
+        dfs.append(df)  # Add dataframe to the list
 
-        if i == 0:
-            df_all = df
-        else:
-            df_all = df_all.merge(df, on='price', how='outer')
+        # Now generate the previous period data
+        prev_start_time = start_time - timedelta(minutes=minutes)  
+        prev_end_time = start_time
+        query = generate_query(prev_start_time, prev_end_time, label + "_prev")
 
-    columns = ['price'] + [col for col in df_all.columns if col != 'price']
-    df_all = df_all[columns]
+        result = collection.aggregate(query)
+        data = list(result)
+        df_prev = pd.DataFrame(data)
 
-    df_all['price'] = df_all['price'].apply(lambda x: '{:.10f}'.format(x))
-    df_all = df_all.fillna(0)
+        if 'price' not in df_prev.columns:
+            df_prev['price'] = np.nan
+            df_prev[f'quantity_{label}_prev'] = 0
 
-    quantity_columns = ['quantity_5min', 'quantity_5min_before', 'quantity_15min', 'quantity_15min_before',
-                      'quantity_60min', 'quantity_60min_before']
+        if df_prev.empty:
+            df_prev = pd.DataFrame([{'price': 0, f'quantity_{label}_prev': 0}])
 
-    column_mapping = {
-        'quantity_5min': '5m',
-        'quantity_5min_before': '5m_b',
-        'quantity_15min': '15m',
-        'quantity_15min_before': '15m_b',
-        'quantity_60min': '60m',
-        'quantity_60min_before': '60m_b'
-    }
-    df_all = df_all.rename(columns=column_mapping)
+        df_prev = df_prev[df_prev['price'] != 0]
+        df_prev['price'] = df_prev['price'].apply(lambda x: '{:.10f}'.format(x))
+        df_prev = df_prev.fillna(0)
 
-    df_styled = df_all.style.set_table_styles([
+        dfs.append(df_prev)  # Add previous dataframe to the list
+
+    # Merge all the dataframes on the 'price' column
+    df_final = dfs[0]
+    for df in dfs[1:]:
+        df_final = pd.merge(df_final, df, on="price", how="outer")
+
+    df_final = df_final.fillna(0)  # Fill any missing values with 0
+
+    df_styled = df_final.style.set_table_styles([
         {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
         {'selector': 'td:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
         {'selector': 'td', 'props': [('text-align', 'right')]}
     ])
 
     return df_styled
+
 
 
 
