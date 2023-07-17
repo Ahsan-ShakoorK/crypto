@@ -66,31 +66,37 @@ def fetch_trading_data(coin):
     time_frames = [(5, "5min"), (15, "15min"), (60, "60min")]
     df_list = []
     for mins, label in time_frames:
-        start_time = now - timedelta(minutes=now.minute % mins, seconds=now.second)
-        end_time = start_time + timedelta(minutes=mins)
-        query = generate_query(start_time, end_time, label)
-        result = collection.aggregate(query)
-        data = list(result)
-        df = pd.DataFrame(data)
-        
-        if 'price' not in df.columns:
-            df['price'] = np.nan
-            df[f'quantity_{label}'] = 0
-        if df.empty:
-            df = pd.DataFrame([{'price': 0, f'quantity_{label}': 0}])
-        df = df[df['price'] != 0]
-        df['price'] = df['price'].apply(lambda x: '{:.10f}'.format(x))
-        df = df.fillna(0)
-        column_mapping = {f'quantity_{label}': label}
-        df = df.rename(columns=column_mapping)
-        df_list.append(df)
+        for i in range(2):
+            if i == 0:
+                time_label = label
+            else:
+                time_label = f"{label}_before"
+            
+            start_time = now - timedelta(minutes=now.minute % mins * (i+1), seconds=now.second)
+            end_time = start_time + timedelta(minutes=mins)
+            query = generate_query(start_time, end_time, time_label)
+            result = collection.aggregate(query)
+            data = list(result)
+            df = pd.DataFrame(data)
+            
+            if 'price' not in df.columns:
+                df['price'] = np.nan
+                df[f'quantity_{time_label}'] = 0
+            if df.empty:
+                df = pd.DataFrame([{'price': 0, f'quantity_{time_label}': 0}])
+            df = df[df['price'] != 0]
+            df['price'] = df['price'].apply(lambda x: '{:.10f}'.format(x))
+            df = df.fillna(0)
+            column_mapping = {f'quantity_{time_label}': time_label}
+            df = df.rename(columns=column_mapping)
+            df_list.append(df)
 
     df_final = df_list[0]
     for df in df_list[1:]:
         df_final = df_final.merge(df, on='price', how='outer')
 
     # Reorder columns
-    cols = ['price'] + [col for col in df_final.columns if col != 'price']
+    cols = ['price'] + sorted([col for col in df_final.columns if col != 'price'])
     df_final = df_final[cols]
 
     df_styled = df_final.style.set_table_styles([
