@@ -63,41 +63,60 @@ def fetch_trading_data(coin):
             }
         ]
 
-    time_frames = [(5, "5min"), (15, "15min"), (60, "60min")]
-    df_list = []
-    for mins, label in time_frames:
-        for i in range(2):
-            if i == 0:
-                time_label = label
-            else:
-                time_label = f"{label}_before"
-            
-            start_time = now - timedelta(minutes=now.minute % mins * (i+1), seconds=now.second)
-            end_time = start_time + timedelta(minutes=mins)
-            query = generate_query(start_time, end_time, time_label)
-            result = collection.aggregate(query)
-            data = list(result)
-            df = pd.DataFrame(data)
-            
-            if 'price' not in df.columns:
-                df['price'] = np.nan
-                df[f'quantity_{time_label}'] = 0
-            if df.empty:
-                df = pd.DataFrame([{'price': 0, f'quantity_{time_label}': 0}])
-            df = df[df['price'] != 0]
-            df['price'] = df['price'].apply(lambda x: '{:.10f}'.format(x))
-            df = df.fillna(0)
-            column_mapping = {f'quantity_{time_label}': time_label}
-            df = df.rename(columns=column_mapping)
-            df_list.append(df)
+    # Define a list of timeframes
+    timeframes = [("5min", 5), ("15min", 15), ("60min", 60)]
+    dfs = []  # List to hold all dataframes
 
-    df_final = df_list[0]
-    for df in df_list[1:]:
-        df_final = df_final.merge(df, on='price', how='outer')
+    for label, minutes in timeframes:
+        start_time = now - timedelta(minutes=now.minute % minutes)
+        end_time = start_time + timedelta(minutes=minutes) 
+        query = generate_query(start_time, end_time, label)
 
-    # Reorder columns
-    cols = ['price'] + sorted([col for col in df_final.columns if col != 'price'])
-    df_final = df_final[cols]
+        result = collection.aggregate(query)
+        data = list(result)
+        df = pd.DataFrame(data)
+
+        if 'price' not in df.columns:
+            df['price'] = np.nan
+            df[f'quantity_{label}'] = 0
+
+        if df.empty:
+            df = pd.DataFrame([{'price': 0, f'quantity_{label}': 0}])
+
+        df = df[df['price'] != 0]
+        df['price'] = df['price'].apply(lambda x: '{:.10f}'.format(x))
+        df = df.fillna(0)
+
+        dfs.append(df)  # Add dataframe to the list
+
+        # Now generate the previous period data
+        prev_start_time = start_time - timedelta(minutes=minutes)  
+        prev_end_time = start_time
+        query = generate_query(prev_start_time, prev_end_time, label + "_prev")
+
+        result = collection.aggregate(query)
+        data = list(result)
+        df_prev = pd.DataFrame(data)
+
+        if 'price' not in df_prev.columns:
+            df_prev['price'] = np.nan
+            df_prev[f'quantity_{label}_prev'] = 0
+
+        if df_prev.empty:
+            df_prev = pd.DataFrame([{'price': 0, f'quantity_{label}_prev': 0}])
+
+        df_prev = df_prev[df_prev['price'] != 0]
+        df_prev['price'] = df_prev['price'].apply(lambda x: '{:.10f}'.format(x))
+        df_prev = df_prev.fillna(0)
+
+        dfs.append(df_prev)  # Add previous dataframe to the list
+
+    # Merge all the dataframes on the 'price' column
+    df_final = dfs[0]
+    for df in dfs[1:]:
+        df_final = pd.merge(df_final, df, on="price", how="outer")
+
+    df_final = df_final.fillna(0)  # Fill any missing values with 0
 
     df_styled = df_final.style.set_table_styles([
         {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
