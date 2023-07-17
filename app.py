@@ -124,12 +124,12 @@ def fetch_trading_data(coin):
 
     # Rename the columns to shorter names
     column_mapping = {
-        'quantity_5min': '5m',
-        'quantity_5min_prev': '5m_b',
-        'quantity_15min': '15m',
-        'quantity_15min_prev': '15m_b',
-        'quantity_60min': '60m',
-        'quantity_60min_prev': '60m_b'
+        'quantity_5min': '5m_candel',
+        'quantity_5min_prev': '5m_before',
+        'quantity_15min': '15m_candel',
+        'quantity_15min_prev': '15m_before',
+        'quantity_60min': '60m_candel',
+        'quantity_60min_prev': '60m_before'
     }
     df_final = df_final.rename(columns=column_mapping)
 
