@@ -122,6 +122,17 @@ def fetch_trading_data(coin):
     columns_ordered = ['price', 'quantity_5min', 'quantity_5min_prev', 'quantity_15min', 'quantity_15min_prev', 'quantity_60min', 'quantity_60min_prev']
     df_final = df_final[columns_ordered]
 
+    # Rename the columns to shorter names
+    column_mapping = {
+        'quantity_5min': '5m',
+        'quantity_5min_prev': '5m_b',
+        'quantity_15min': '15m',
+        'quantity_15min_prev': '15m_b',
+        'quantity_60min': '60m',
+        'quantity_60min_prev': '60m_b'
+    }
+    df_final = df_final.rename(columns=column_mapping)
+
     df_styled = df_final.style.set_table_styles([
         {'selector': 'th:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
         {'selector': 'td:first-child', 'props': [('position', 'sticky'), ('left', '0')]},
