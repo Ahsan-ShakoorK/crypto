@@ -117,7 +117,14 @@ def fetch_trading_data(coin):
         df_final = pd.merge(df_final, df, on="price", how="outer")
 
     df_final = df_final.fillna(0)  # Fill any missing values with 0
-
+    df_final = df.rename(columns={
+        'quantity_5min': '5m',
+        'quantity_5min_before': '5m_b',
+        'quantity_15min': '15m',
+        'quantity_15min_before': '15m_b',
+        'quantity_60min': '60m',
+        'quantity_60min_before': '60m_b'
+        })
     # Reorder columns
     columns_ordered = ['price', 'quantity_5min', 'quantity_5min_prev', 'quantity_15min', 'quantity_15min_prev', 'quantity_60min', 'quantity_60min_prev']
     df_final = df_final[columns_ordered]
