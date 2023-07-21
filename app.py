@@ -106,7 +106,7 @@ def fetch_trading_data(coin):
             df_prev = pd.DataFrame([{'price': 0, f'quantity_{label}_prev': 0}])
 
         df_prev = df_prev[df_prev['price'] != 0]
-        df_prev['price'] = df_prev['price'].apply(lambda x: '{:.10f}'.format(x))
+        df_prev['price'] = df_prev['price'].apply(lambda x: '{:.11f}'.format(x))
         df_prev = df_prev.fillna(0)
 
         dfs.append(df_prev)  # Add previous dataframe to the list
@@ -230,7 +230,8 @@ def to_excel_bytes(df):
         df.to_excel(writer, sheet_name='Sheet1')
     output.seek(0)
     return output.getvalue()
-pd.set_option('display.float_format', '{:.10f}'.format)
+pd.set_option('display.float_format', lambda x: '%.11f' % x)
+
 
 def main():
     try:
@@ -278,7 +279,8 @@ def main():
                                                         value=percentage_value, percentage=True)
 
         st.subheader("Daily Chart Data")
-        with pd.option_context('display.float_format', '{:0.10f}'.format):
+        with pd.option_context('display.float_format', '{:0.11f}'.format):
+
             st.write(df_daily_styled)
 
         # Download button for Excel
