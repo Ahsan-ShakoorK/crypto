@@ -84,7 +84,7 @@ def fetch_trading_data(coin):
             df = pd.DataFrame([{'price': 0, f'quantity_{label}': 0}])
 
         df = df[df['price'] != 0]
-        df['price'] = df['price'].apply(lambda x: '{:.10f}'.format(x))
+        df['price'] = df['price'].apply(lambda x: '{:.15f}'.format(x))
         df = df.fillna(0)
 
         dfs.append(df)  # Add dataframe to the list
