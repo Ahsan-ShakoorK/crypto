@@ -9,8 +9,6 @@ from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 from datetime import datetime, timedelta
 import pytz
-def remove_trailing_zeros(num):
-    return ('%.15f' % num).rstrip('0').rstrip('.')
 
 
 # Modify pandas display options
@@ -87,7 +85,7 @@ def fetch_trading_data(coin):
             df = pd.DataFrame([{'price': 0, f'quantity_{label}': 0}])
 
         df = df[df['price'] != 0]
-        df['price'] = df['price'].apply(lambda x: '{:.11f}'.format(x))
+        df['price'] = df['price'].apply(lambda x: '{:.12f}'.format(x))
         df = df.fillna(0)
 
         dfs.append(df)  # Add dataframe to the list
@@ -109,7 +107,7 @@ def fetch_trading_data(coin):
             df_prev = pd.DataFrame([{'price': 0, f'quantity_{label}_prev': 0}])
 
         df_prev = df_prev[df_prev['price'] != 0]
-        df_prev['price'] = df_prev['price'].apply(lambda x: '{:.11f}'.format(x))
+        df_prev['price'] = df_prev['price'].apply(lambda x: '{:.12f}'.format(x))
         df_prev = df_prev.fillna(0)
 
         dfs.append(df_prev)  # Add previous dataframe to the list
@@ -206,7 +204,7 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, highli
 
     # Reset index, apply formatting, and set index again
     df = df.reset_index()
-    df['price'] = df['price'].apply(lambda x: '{:.10f}'.format(x))
+    df['price'] = df['price'].apply(lambda x: '{:.12f}'.format(x))
     df.set_index('price', inplace=True)   
     # Filter out rows where index (price) is 0
     df = df[df.index != 0]
@@ -233,7 +231,7 @@ def to_excel_bytes(df):
         df.to_excel(writer, sheet_name='Sheet1')
     output.seek(0)
     return output.getvalue()
-pd.set_option('display.float_format', lambda x: '%.10f' % x)
+pd.set_option('display.float_format', lambda x: '%.12f' % x)
 
 
 def main():
