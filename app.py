@@ -87,8 +87,7 @@ def fetch_trading_data(coin):
             df = pd.DataFrame([{'price': 0, f'quantity_{label}': 0}])
 
         df = df[df['price'] != 0]
-        df['price'] = df['price'].apply(remove_trailing_zeros)
-
+        df['price'] = df['price'].apply(lambda x: '{:.11f}'.format(x))
         df = df.fillna(0)
 
         dfs.append(df)  # Add dataframe to the list
@@ -110,8 +109,7 @@ def fetch_trading_data(coin):
             df_prev = pd.DataFrame([{'price': 0, f'quantity_{label}_prev': 0}])
 
         df_prev = df_prev[df_prev['price'] != 0]
-        df['price'] = df['price'].apply(remove_trailing_zeros)
-
+        df_prev['price'] = df_prev['price'].apply(lambda x: '{:.11f}'.format(x))
         df_prev = df_prev.fillna(0)
 
         dfs.append(df_prev)  # Add previous dataframe to the list
@@ -208,7 +206,7 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, highli
 
     # Reset index, apply formatting, and set index again
     df = df.reset_index()
-    df['price'] = df['price'].apply(remove_trailing_zeros)
+    df['price'] = df['price'].apply(lambda x: '{:.10f}'.format(x))
     df.set_index('price', inplace=True)   
     # Filter out rows where index (price) is 0
     df = df[df.index != 0]
