@@ -9,6 +9,9 @@ from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 from datetime import datetime, timedelta
 import pytz
+def remove_trailing_zeros(num):
+    return ('%.15f' % num).rstrip('0').rstrip('.')
+
 
 # Modify pandas display options
 pd.set_option('display.max_columns', None)
@@ -84,7 +87,8 @@ def fetch_trading_data(coin):
             df = pd.DataFrame([{'price': 0, f'quantity_{label}': 0}])
 
         df = df[df['price'] != 0]
-        df['price'] = df['price'].apply(lambda x: '{:.15f}'.format(x))
+        df['price'] = df['price'].apply(remove_trailing_zeros)
+
         df = df.fillna(0)
 
         dfs.append(df)  # Add dataframe to the list
@@ -106,7 +110,8 @@ def fetch_trading_data(coin):
             df_prev = pd.DataFrame([{'price': 0, f'quantity_{label}_prev': 0}])
 
         df_prev = df_prev[df_prev['price'] != 0]
-        df_prev['price'] = df_prev['price'].apply(lambda x: '{:.11f}'.format(x))
+        df['price'] = df['price'].apply(remove_trailing_zeros)
+
         df_prev = df_prev.fillna(0)
 
         dfs.append(df_prev)  # Add previous dataframe to the list
@@ -203,7 +208,7 @@ def fetch_daily_data_combined(coin, selected_date, timeframe, value=None, highli
 
     # Reset index, apply formatting, and set index again
     df = df.reset_index()
-    df['price'] = df['price'].apply(lambda x: '{:.11f}'.format(x))
+    df['price'] = df['price'].apply(remove_trailing_zeros)
     df.set_index('price', inplace=True)   
     # Filter out rows where index (price) is 0
     df = df[df.index != 0]
@@ -230,7 +235,7 @@ def to_excel_bytes(df):
         df.to_excel(writer, sheet_name='Sheet1')
     output.seek(0)
     return output.getvalue()
-pd.set_option('display.float_format', lambda x: '%.11f' % x)
+pd.set_option('display.float_format', lambda x: '%.10f' % x)
 
 
 def main():
@@ -279,7 +284,7 @@ def main():
                                                         value=percentage_value, percentage=True)
 
         st.subheader("Daily Chart Data")
-        with pd.option_context('display.float_format', '{:0.11f}'.format):
+        with pd.option_context('display.float_format', '{:0.10f}'.format):
 
             st.write(df_daily_styled)
 
