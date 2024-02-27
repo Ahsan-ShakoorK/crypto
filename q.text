@@ -17,13 +17,3 @@
 10.	Retrieve the data in a manner that permits computations on all potential data points. If feasible, include data in as small as 5-second intervals, enabling thorough and accurate data analysis.
 11.	The resultant code should ensure the web application possesses a user-friendly interface, designed to fetch and display all possible data provided by the API, thereby maximizing the amount of information available to the user.
 
-
-vijG9ARQVjevGky2bkTgFACUMmRJBVxVqwtzDIONOToNIw4YmTMxMgyy4PEVUhFH
-
-API_SECRET = "f9BHEpkASNW9S0nd7xe1Iq55ccd0bFrwI8LL0mA0UlIgODhubsX8noG6TnWicvmh"
-
-
-API_KEY = "vijG9ARQVjevGky2bkTgFACUMmRJBVxVqwtzDIONOToNIw4YmTMxMgyy4PEVUhFH"
-API_SECRET = "f9BHEpkASNW9S0nd7xe1Iq55ccd0bFrwI8LL0mA0UlIgODhubsX8noG6TnWicvmh"
-
-    api_key = '50eb99a85c56c3c3d1d4491e53f9ababce42f813793ef13da8f1dd93e7ecd920'
